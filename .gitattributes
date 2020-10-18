@@ -1,0 +1,3 @@
+/Tests export-ignore
+/.* export-ignore
+/phpcs.xml.dist export-ignore
