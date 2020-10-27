@@ -102,4 +102,14 @@ class MeasurementRepository implements ObjectRepository
     {
         return $this->className;
     }
+
+    /**
+     * Returns MeasurementManager.
+     *
+     * @return MeasurementManager
+     */
+    protected function getMeasurementManager(): MeasurementManager
+    {
+        return $this->measurementManager;
+    }
 }
