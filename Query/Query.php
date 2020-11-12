@@ -270,13 +270,14 @@ class Query implements IteratorAggregate
     /**
      * Count.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function count(string $fieldName): self
+    public function count(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->count($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->count($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -284,13 +285,14 @@ class Query implements IteratorAggregate
     /**
      * Median.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function median(string $fieldName): self
+    public function median(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->median($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->median($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -298,13 +300,14 @@ class Query implements IteratorAggregate
     /**
      * Mean.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function mean(string $fieldName): self
+    public function mean(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->mean($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->mean($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -312,13 +315,14 @@ class Query implements IteratorAggregate
     /**
      * Sum.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function sum(string $fieldName): self
+    public function sum(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->sum($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->sum($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -326,13 +330,14 @@ class Query implements IteratorAggregate
     /**
      * First.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function first(string $fieldName): self
+    public function first(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->first($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->first($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -340,13 +345,14 @@ class Query implements IteratorAggregate
     /**
      * Last.
      *
-     * @param string $fieldName
+     * @param string  $fieldName
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function last(string $fieldName): self
+    public function last(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->last($this->classMetadata->getFieldDatabaseName($fieldName));
+        $this->queryBuilder->last($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
 
         return $this;
     }
@@ -369,14 +375,18 @@ class Query implements IteratorAggregate
     /**
      * Order by.
      *
-     * @param string $field
-     * @param string $direction
+     * @param string  $field
+     * @param string  $direction
+     * @param boolean $mappedField
      *
      * @return self
      */
-    public function orderBy(string $field, string $direction = 'ASC'): self
+    public function orderBy(string $field, string $direction = 'ASC', bool $mappedField = true): self
     {
-        $this->queryBuilder->orderBy($this->classMetadata->getFieldDatabaseName($field), $direction);
+        $this->queryBuilder->orderBy(
+            $mappedField ? $this->classMetadata->getFieldDatabaseName($field) : $field,
+            $direction
+        );
 
         return $this;
     }
