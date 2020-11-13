@@ -229,6 +229,26 @@ class Query implements IteratorAggregate
     }
 
     /**
+     * Quote field name.
+     *
+     * @param string  $fieldName
+     * @param boolean $mappedField
+     * @param boolean $enquote
+     *
+     * @return string
+     */
+    public function quoteFieldName(string $fieldName, bool $mappedField = true, bool $enquote = true): string
+    {
+        if (!$mappedField) {
+            return $fieldName;
+        }
+
+        $fieldName = $this->classMetadata->getFieldDatabaseName($fieldName);
+
+        return $enquote ? sprintf('"%s"', addslashes($fieldName)) : $fieldName;
+    }
+
+    /**
      * Select.
      *
      * @param string $select
@@ -277,7 +297,7 @@ class Query implements IteratorAggregate
      */
     public function count(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->count($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->count($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -292,7 +312,7 @@ class Query implements IteratorAggregate
      */
     public function median(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->median($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->median($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -307,7 +327,7 @@ class Query implements IteratorAggregate
      */
     public function mean(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->mean($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->mean($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -322,7 +342,7 @@ class Query implements IteratorAggregate
      */
     public function sum(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->sum($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->sum($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -337,7 +357,7 @@ class Query implements IteratorAggregate
      */
     public function first(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->first($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->first($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -352,7 +372,7 @@ class Query implements IteratorAggregate
      */
     public function last(string $fieldName, bool $mappedField = true): self
     {
-        $this->queryBuilder->last($mappedField ? $this->classMetadata->getFieldDatabaseName($fieldName) : $fieldName);
+        $this->queryBuilder->last($this->quoteFieldName($fieldName, $mappedField));
 
         return $this;
     }
@@ -367,7 +387,7 @@ class Query implements IteratorAggregate
      */
     public function groupBy(string $field, bool $mappedField = true): self
     {
-        $this->queryBuilder->groupBy($mappedField ? $this->classMetadata->getFieldDatabaseName($field) : $field);
+        $this->queryBuilder->groupBy($this->quoteFieldName($field, $mappedField));
 
         return $this;
     }
@@ -383,10 +403,7 @@ class Query implements IteratorAggregate
      */
     public function orderBy(string $field, string $direction = 'ASC', bool $mappedField = true): self
     {
-        $this->queryBuilder->orderBy(
-            $mappedField ? $this->classMetadata->getFieldDatabaseName($field) : $field,
-            $direction
-        );
+        $this->queryBuilder->orderBy($this->quoteFieldName($field, $mappedField, false), $direction);
 
         return $this;
     }
