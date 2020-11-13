@@ -205,6 +205,16 @@ class Query implements IteratorAggregate
     }
 
     /**
+     * Executes COUNT query and returns number of records.
+     *
+     * @return integer
+     */
+    public function executeCount(): int
+    {
+        return $this->count($this->classMetadata->getCountableFieldName())->getSingleScalarResult() ?? 0;
+    }
+
+    /**
      * Iterate the results.
      *
      * @param integer|null $hydrationMode
