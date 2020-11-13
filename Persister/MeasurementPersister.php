@@ -118,7 +118,7 @@ class MeasurementPersister
                 if ($value !== null) {
                     $tags[$name] = $value;
                 }
-            } else {
+            } elseif ($value !== null) {
                 $fields[$name] = $value;
             }
         }
