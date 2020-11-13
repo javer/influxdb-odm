@@ -100,6 +100,8 @@ final class ClassMetadata implements BaseClassMetadata
      */
     public array $fieldNames = [];
 
+    public ?string $countableFieldName = null;
+
     /**
      * READ-ONLY: Whether this class describes the mapping of a mapped superclass.
      *
@@ -496,6 +498,18 @@ final class ClassMetadata implements BaseClassMetadata
             $this->identifier = $mapping['fieldName'];
         }
 
+        if (isset($mapping['countable']) && $mapping['countable'] === true) {
+            if (($mapping['id'] ?? false) || ($mapping['tag'] ?? false)) {
+                throw MappingException::tagOrIdCannotBeCountable($this->name, $mapping['fieldName']);
+            }
+
+            if ($this->countableFieldName !== null) {
+                throw MappingException::hasSeveralCountableFields($this->name);
+            }
+
+            $this->countableFieldName = $mapping['fieldName'];
+        }
+
         $this->fieldMappings[$mapping['fieldName']] = $mapping;
         $this->fieldNames[$mapping['name']] = $mapping['fieldName'];
 
@@ -604,5 +618,23 @@ final class ClassMetadata implements BaseClassMetadata
         $fieldMapping = $this->getFieldMapping($fieldName);
 
         return Type::getType($fieldMapping['type'])->convertToPHPValue($value);
+    }
+
+    /**
+     * Returns countable field name.
+     *
+     * @return string
+     *
+     * @throws MappingException
+     */
+    public function getCountableFieldName(): string
+    {
+        $countableFieldName = $this->countableFieldName;
+
+        if ($countableFieldName === null) {
+            throw MappingException::missingCountableField($this->name);
+        }
+
+        return $countableFieldName;
     }
 }

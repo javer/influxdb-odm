@@ -65,7 +65,7 @@ class CpuLoad
     private ?int $coreNumber = null;
 
     /**
-     * @InfluxDB\Field(name="load", type="float")
+     * @InfluxDB\Field(name="load", type="float", countable=true)
      */
     private ?float $load = null;
 }

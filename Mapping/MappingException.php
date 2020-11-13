@@ -66,6 +66,49 @@ class MappingException extends BaseMappingException
     }
 
     /**
+     * Tag or Id cannot be countable.
+     *
+     * @param string $className
+     * @param string $fieldName
+     *
+     * @return static
+     */
+    public static function tagOrIdCannotBeCountable(string $className, string $fieldName): self
+    {
+        return new self(
+            sprintf("Tag or Id '%s' cannot be countable in the Measurement class '%s'.", $fieldName, $className)
+        );
+    }
+
+    /**
+     * Has several countable fields.
+     *
+     * @param string $className
+     *
+     * @return static
+     */
+    public static function hasSeveralCountableFields(string $className): self
+    {
+        return new self(
+            sprintf("The Measurement class '%s' field mapping has several countable fields.", $className)
+        );
+    }
+
+    /**
+     * Missing countable field.
+     *
+     * @param string $className
+     *
+     * @return static
+     */
+    public static function missingCountableField(string $className): self
+    {
+        return new self(
+            sprintf("The Measurement class '%s' field mapping misses the countable field.", $className)
+        );
+    }
+
+    /**
      * Class is not a valid measurement.
      *
      * @param string $className
