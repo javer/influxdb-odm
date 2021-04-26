@@ -7,7 +7,7 @@ on:
 
 jobs:
     test:
-        name: PHP ${{ matrix.php-version }} + Symfony ${{ matrix.symfony-version }} + Sonata ${{ matrix.sonata-version }}
+        name: PHP ${{ matrix.php-version }}
 
         runs-on: ubuntu-20.04
 
