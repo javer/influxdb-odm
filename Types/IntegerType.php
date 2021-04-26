@@ -2,11 +2,6 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-/**
- * Class IntegerType
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 class IntegerType extends Type
 {
     /**

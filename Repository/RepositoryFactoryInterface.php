@@ -4,11 +4,6 @@ namespace Javer\InfluxDB\ODM\Repository;
 
 use Javer\InfluxDB\ODM\MeasurementManager;
 
-/**
- * Interface RepositoryFactory
- *
- * @package Javer\InfluxDB\ODM\Repository
- */
 interface RepositoryFactoryInterface
 {
     /**
@@ -18,6 +13,10 @@ interface RepositoryFactoryInterface
      * @param string             $className
      *
      * @return MeasurementRepository
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   MeasurementRepository<T>
      */
     public function getRepository(MeasurementManager $measurementManager, string $className): MeasurementRepository;
 }

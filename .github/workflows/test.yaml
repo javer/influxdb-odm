@@ -1,0 +1,54 @@
+name: Test
+
+on:
+    push:
+    pull_request:
+        types: [opened, synchronize, edited, reopened]
+
+jobs:
+    test:
+        name: PHP ${{ matrix.php-version }} + Symfony ${{ matrix.symfony-version }} + Sonata ${{ matrix.sonata-version }}
+
+        runs-on: ubuntu-20.04
+
+        continue-on-error: ${{ matrix.experimental }}
+
+        strategy:
+            matrix:
+                include:
+                    - php-version: '7.4'
+                      experimental: false
+                    - php-version: '8.0'
+                      experimental: false
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  coverage: none
+                  ini-values: "memory_limit=-1"
+                  php-version: ${{ matrix.php-version }}
+                  tools: composer:v2, cs2pr
+
+            - name: Validate composer.json
+              run: composer validate --no-check-lock
+
+            - name: Install Composer dependencies
+              uses: "ramsey/composer-install@v1"
+              with:
+                  composer-options: "--prefer-dist"
+
+            - name: Setup problem matchers for PHP
+              run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+
+            - name: Lint PHP files
+              run: find Connection Hydrator Iterator Mapping Persister Query Repository Types -name "*.php" -print0 | xargs -0 -n1 -P8 php -l
+
+            - name: Validate code style
+              run: vendor/bin/phpcs -q --report=checkstyle | cs2pr
+
+            - name: PHPStan
+              run: vendor/bin/phpstan analyse

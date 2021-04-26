@@ -2,11 +2,6 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-/**
- * Class StringType
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 class StringType extends Type
 {
     /**

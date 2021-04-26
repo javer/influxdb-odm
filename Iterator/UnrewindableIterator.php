@@ -6,13 +6,11 @@ use Generator;
 use LogicException;
 use RuntimeException;
 
-/**
- * Class UnrewindableIterator
- *
- * @package Javer\InfluxDB\ODM\Iterator
- */
 class UnrewindableIterator implements IteratorInterface
 {
+    /**
+     * @phpstan-var Generator<int, mixed>|null
+     */
     private ?Generator $iterator;
 
     private bool $iteratorAdvanced = false;
@@ -21,6 +19,8 @@ class UnrewindableIterator implements IteratorInterface
      * UnrewindableIterator constructor.
      *
      * @param iterable $iterable
+     *
+     * @phpstan-param iterable<int, mixed> $iterable
      */
     public function __construct(iterable $iterable)
     {
@@ -116,7 +116,7 @@ class UnrewindableIterator implements IteratorInterface
     /**
      * Returns iterator.
      *
-     * @return Generator
+     * @return Generator<int, mixed>
      *
      * @throws RuntimeException
      */
@@ -134,7 +134,9 @@ class UnrewindableIterator implements IteratorInterface
      *
      * @param iterable $iterable
      *
-     * @return Generator
+     * @return Generator<int, mixed>
+     *
+     * @phpstan-param iterable<int, mixed> $iterable
      */
     private function wrapIterable(iterable $iterable): Generator
     {

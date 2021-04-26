@@ -5,12 +5,8 @@ namespace Javer\InfluxDB\ODM\Mapping\Annotations;
 use Doctrine\Common\Annotations\Annotation;
 
 /**
- * Class Measurement
- *
  * @Annotation
  * @Target("CLASS")
- *
- * @package Javer\InfluxDB\ODM\Mapping\Annotations
  */
 final class Measurement extends Annotation
 {

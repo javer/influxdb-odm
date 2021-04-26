@@ -3,18 +3,21 @@
 namespace Javer\InfluxDB\ODM\Repository;
 
 use Doctrine\Persistence\ObjectRepository;
+use Javer\InfluxDB\ODM\Mapping\MappingException;
 use Javer\InfluxDB\ODM\MeasurementManager;
 use Javer\InfluxDB\ODM\Query\Query;
 
 /**
- * Class MeasurementRepository
- *
- * @package Javer\InfluxDB\ODM\Repository
+ * @template T of object
+ * @template-implements ObjectRepository<T>
  */
 class MeasurementRepository implements ObjectRepository
 {
     private MeasurementManager $measurementManager;
 
+    /**
+     * @phpstan-var class-string<T>
+     */
     private string $className;
 
     /**
@@ -22,6 +25,8 @@ class MeasurementRepository implements ObjectRepository
      *
      * @param MeasurementManager $measurementManager
      * @param string             $className
+     *
+     * @phpstan-param class-string<T> $className
      */
     public function __construct(MeasurementManager $measurementManager, string $className)
     {
@@ -33,6 +38,8 @@ class MeasurementRepository implements ObjectRepository
      * Create a new query.
      *
      * @return Query
+     *
+     * @phpstan-return Query<T>
      */
     public function createQuery(): Query
     {
@@ -41,6 +48,10 @@ class MeasurementRepository implements ObjectRepository
 
     /**
      * {@inheritDoc}
+     *
+     * @throws MappingException
+     *
+     * @phpstan-return ?T
      */
     public function find($id)
     {
@@ -50,11 +61,17 @@ class MeasurementRepository implements ObjectRepository
 
         $classMetadata = $this->measurementManager->getClassMetadata($this->className);
 
+        if ($classMetadata->identifier === null) {
+            throw MappingException::missingIdentifierField($this->className);
+        }
+
         return $this->createQuery()->where($classMetadata->identifier, $id)->getResult()[0] ?? null;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return array<int, T>
      */
     public function findAll(): array
     {
@@ -63,6 +80,8 @@ class MeasurementRepository implements ObjectRepository
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return array<int, T>
      */
     public function findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null): array
     {
@@ -89,6 +108,8 @@ class MeasurementRepository implements ObjectRepository
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return ?T
      */
     public function findOneBy(array $criteria): ?object
     {
@@ -97,6 +118,8 @@ class MeasurementRepository implements ObjectRepository
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return class-string<T>
      */
     public function getClassName(): string
     {

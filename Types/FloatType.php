@@ -2,11 +2,6 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-/**
- * Class FloatType
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 class FloatType extends Type
 {
     /**

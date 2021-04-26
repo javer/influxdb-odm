@@ -5,16 +5,14 @@ namespace Javer\InfluxDB\ODM\Iterator;
 use Iterator;
 
 /**
- * Interface Iterator
- *
- * @package Javer\InfluxDB\ODM\Iterator
+ * @template-extends Iterator<mixed>
  */
 interface IteratorInterface extends Iterator
 {
     /**
      * Returns array representation.
      *
-     * @return array
+     * @return array<mixed>
      */
     public function toArray(): array;
 }

@@ -6,11 +6,6 @@ use DateTimeInterface;
 use InvalidArgumentException;
 use Javer\InfluxDB\ODM\Mapping\MappingException;
 
-/**
- * Class Type
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 abstract class Type
 {
     public const TIMESTAMP = 'timestamp';
@@ -29,7 +24,7 @@ abstract class Type
     /**
      * The map of supported doctrine mapping types.
      *
-     * @var string[]
+     * @var array<string, class-string>
      */
     private static array $typesMap = [
         self::TIMESTAMP => TimestampType::class,
@@ -75,6 +70,8 @@ abstract class Type
      *
      * @param string $name
      * @param string $class
+     *
+     * @phpstan-param class-string $class
      */
     public static function registerType(string $name, string $class): void
     {
@@ -163,6 +160,8 @@ abstract class Type
      * @param string $className
      *
      * @throws MappingException
+     *
+     * @phpstan-param class-string $className
      */
     public static function addType(string $name, string $className): void
     {
@@ -192,6 +191,8 @@ abstract class Type
      * @param string $className
      *
      * @throws MappingException
+     *
+     * @phpstan-param class-string $className
      */
     public static function overrideType(string $name, string $className): void
     {
@@ -205,7 +206,7 @@ abstract class Type
     /**
      * Get the types array map which holds all registered types and the corresponding type class.
      *
-     * @return array
+     * @return array<string, class-string>
      */
     public static function getTypesMap(): array
     {

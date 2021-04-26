@@ -2,11 +2,6 @@
 
 namespace Javer\InfluxDB\ODM;
 
-/**
- * Class MeasurementNotFoundException
- *
- * @package Javer\InfluxDB\ODM
- */
 class MeasurementNotFoundException extends InfluxDBException
 {
     /**
@@ -16,6 +11,8 @@ class MeasurementNotFoundException extends InfluxDBException
      * @param mixed  $identifier
      *
      * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function fromClassNameAndIdentifier(string $className, $identifier): self
     {

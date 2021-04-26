@@ -7,11 +7,6 @@ use InfluxDB\Point;
 use Javer\InfluxDB\ODM\MeasurementManager;
 use Javer\InfluxDB\ODM\Types\Type;
 
-/**
- * Class MeasurementPersister
- *
- * @package Javer\InfluxDB\ODM\Persister
- */
 class MeasurementPersister
 {
     private const PRECISION_MULTIPLIERS = [
@@ -41,6 +36,8 @@ class MeasurementPersister
      * Persist objects to the database.
      *
      * @param iterable $objects
+     *
+     * @phpstan-param iterable<object> $objects
      */
     public function persist(iterable $objects): void
     {
@@ -111,9 +108,9 @@ class MeasurementPersister
             $value = Type::getType($type)->convertToDatabaseValue($fieldValue);
 
             if ($fieldMapping['id'] ?? false) {
-                $this->precision = $fieldMapping['precision'];
+                $this->precision = $fieldMapping['precision'] ?? Database::PRECISION_MICROSECONDS;
 
-                $timestamp = sprintf('%d', $fieldValue->format('U.u') * self::PRECISION_MULTIPLIERS[$this->precision]);
+                $timestamp = (int) ($fieldValue->format('U.u') * self::PRECISION_MULTIPLIERS[$this->precision]);
             } elseif ($fieldMapping['tag'] ?? false) {
                 if ($value !== null) {
                     $tags[$name] = $value;

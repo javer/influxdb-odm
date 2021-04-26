@@ -7,11 +7,6 @@ use Javer\InfluxDB\ODM\Mapping\Annotations\Measurement;
 use ReflectionException;
 use ReflectionObject;
 
-/**
- * Class MappingException
- *
- * @package Javer\InfluxDB\ODM\Mapping
- */
 class MappingException extends BaseMappingException
 {
     /**
@@ -19,7 +14,7 @@ class MappingException extends BaseMappingException
      *
      * @param string $name
      *
-     * @return static
+     * @return self
      */
     public static function typeExists(string $name): self
     {
@@ -31,7 +26,7 @@ class MappingException extends BaseMappingException
      *
      * @param string $name
      *
-     * @return static
+     * @return self
      */
     public static function typeNotFound(string $name): self
     {
@@ -44,7 +39,9 @@ class MappingException extends BaseMappingException
      * @param string $className
      * @param string $fieldName
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function mappingNotFound(string $className, string $fieldName): self
     {
@@ -56,7 +53,9 @@ class MappingException extends BaseMappingException
      *
      * @param string $className
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function missingFieldName(string $className): self
     {
@@ -71,7 +70,9 @@ class MappingException extends BaseMappingException
      * @param string $className
      * @param string $fieldName
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function tagOrIdCannotBeCountable(string $className, string $fieldName): self
     {
@@ -85,7 +86,9 @@ class MappingException extends BaseMappingException
      *
      * @param string $className
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function hasSeveralCountableFields(string $className): self
     {
@@ -99,7 +102,9 @@ class MappingException extends BaseMappingException
      *
      * @param string $className
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function missingCountableField(string $className): self
     {
@@ -113,7 +118,9 @@ class MappingException extends BaseMappingException
      *
      * @param string $className
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function classIsNotAValidMeasurement(string $className): self
     {
@@ -127,7 +134,9 @@ class MappingException extends BaseMappingException
      * @param Measurement $mappedAs
      * @param Measurement $offending
      *
-     * @return static
+     * @return self
+     *
+     * @phpstan-param class-string $className
      */
     public static function classCanOnlyBeMappedByOneMeasurement(
         string $className,
@@ -149,10 +158,24 @@ class MappingException extends BaseMappingException
      * @param string              $measurement
      * @param ReflectionException $previousException
      *
-     * @return static
+     * @return self
      */
     public static function reflectionFailure(string $measurement, ReflectionException $previousException): self
     {
         return new self('An error occurred in ' . $measurement, 0, $previousException);
+    }
+
+    /**
+     * Missing identifier field.
+     *
+     * @param string $className
+     *
+     * @return self
+     *
+     * @phpstan-param class-string $className
+     */
+    public static function missingIdentifierField(string $className): self
+    {
+        return new self(sprintf('The identifier is missing for a query of %s', $className));
     }
 }

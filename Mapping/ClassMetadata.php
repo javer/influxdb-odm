@@ -29,7 +29,7 @@ use ReflectionProperty;
  *    get the whole class name, namespace inclusive, prepended to every property in
  *    the serialized representation).
  *
- * @package Javer\InfluxDB\ODM\Mapping
+ * @phpstan-template T of object
  */
 final class ClassMetadata implements BaseClassMetadata
 {
@@ -58,6 +58,8 @@ final class ClassMetadata implements BaseClassMetadata
      * READ-ONLY: The name of the measurement class.
      *
      * @var string
+     *
+     * @phpstan-var class-string<T>
      */
     public string $name;
 
@@ -89,6 +91,16 @@ final class ClassMetadata implements BaseClassMetadata
      * Multiple fields of a measurement can have the id attribute, forming a composite key.
      *
      * @var array
+     *
+     * @phpstan-var array<string, array{
+     *      type: string,
+     *      fieldName: string,
+     *      name: string,
+     *      id?: bool,
+     *      precision?: string,
+     *      countable?: bool,
+     *      tag?: bool,
+     * }>
      */
     public array $fieldMappings = [];
 
@@ -96,7 +108,7 @@ final class ClassMetadata implements BaseClassMetadata
      * READ-ONLY: An array of field names. Used to look up field names from column names.
      * Keys are column names and values are field names.
      *
-     * @var array
+     * @var array<string>
      */
     public array $fieldNames = [];
 
@@ -113,6 +125,8 @@ final class ClassMetadata implements BaseClassMetadata
      * The ReflectionClass instance of the mapped class.
      *
      * @var ReflectionClass
+     *
+     * @phpstan-var ReflectionClass<T>
      */
     public ReflectionClass $reflClass;
 
@@ -124,6 +138,8 @@ final class ClassMetadata implements BaseClassMetadata
      * ClassMetadata constructor.
      *
      * @param string $measurementClassName
+     *
+     * @phpstan-param class-string<T> $measurementClassName
      */
     public function __construct(string $measurementClassName)
     {
@@ -136,6 +152,8 @@ final class ClassMetadata implements BaseClassMetadata
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return ReflectionClass<T>
      */
     public function getReflectionClass(): ReflectionClass
     {
@@ -173,7 +191,7 @@ final class ClassMetadata implements BaseClassMetadata
      */
     public function getIdentifierFieldNames(): array
     {
-        return [$this->identifier];
+        return $this->identifier ? [$this->identifier] : [];
     }
 
     /**
@@ -208,6 +226,8 @@ final class ClassMetadata implements BaseClassMetadata
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return class-string<T>
      */
     public function getName(): string
     {
@@ -247,7 +267,7 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * Sets the collection this Measurement is mapped to.
      *
-     * @param array|string $name
+     * @param string $name
      *
      * @throws InvalidArgumentException
      */
@@ -396,8 +416,18 @@ final class ClassMetadata implements BaseClassMetadata
      * @param string $fieldName
      *
      * @return array
-
+     *
      * @throws MappingException
+     *
+     * @phpstan-return array{
+     *      type: string,
+     *      fieldName: string,
+     *      name: string,
+     *      id?: bool,
+     *      precision?: string,
+     *      countable?: bool,
+     *      tag?: bool,
+     * }
      */
     public function getFieldMapping(string $fieldName): array
     {
@@ -479,6 +509,16 @@ final class ClassMetadata implements BaseClassMetadata
      * @param array $mapping
      *
      * @throws MappingException
+     *
+     * @phpstan-param array{
+     *      type: string,
+     *      fieldName?: string,
+     *      name?: string,
+     *      id?: bool,
+     *      precision?: string,
+     *      countable?: bool,
+     *      tag?: bool,
+     * } $mapping
      */
     public function mapField(array $mapping): void
     {
@@ -570,9 +610,12 @@ final class ClassMetadata implements BaseClassMetadata
      * Creates a new instance of the mapped class, without invoking the constructor.
      *
      * @return object
+     *
+     * @phpstan-return T
      */
     public function newInstance(): object
     {
+        // @phpstan-ignore-next-line: doctrine/instantiator is not fully PHPStan compliant
         return $this->instantiator->instantiate($this->name);
     }
 

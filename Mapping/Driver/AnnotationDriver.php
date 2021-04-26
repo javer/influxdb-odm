@@ -12,15 +12,12 @@ use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\Mapping\MappingException;
 use ReflectionClass;
 
-/**
- * Class AnnotationDriver
- *
- * @package Javer\InfluxDB\ODM\Mapping\Driver
- */
 class AnnotationDriver extends AbstractAnnotationDriver
 {
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-param class-string $className
      */
     public function isTransient($className): bool
     {
@@ -39,11 +36,13 @@ class AnnotationDriver extends AbstractAnnotationDriver
      * {@inheritDoc}
      *
      * @throws MappingException
+     *
+     * @phpstan-param class-string $className
      */
-    public function loadMetadataForClass($className, BaseClassMetadata $class): void
+    public function loadMetadataForClass($className, BaseClassMetadata $metadata): void
     {
-        assert($class instanceof ClassMetadata);
-        $reflClass = $class->getReflectionClass();
+        assert($metadata instanceof ClassMetadata);
+        $reflClass = $metadata->getReflectionClass();
         $classAnnotations = $this->reader->getClassAnnotations($reflClass);
         $measurementAnnotation = null;
 
@@ -66,11 +65,11 @@ class AnnotationDriver extends AbstractAnnotationDriver
         }
 
         if (isset($measurementAnnotation->name)) {
-            $class->setMeasurement($measurementAnnotation->name);
+            $metadata->setMeasurement($measurementAnnotation->name);
         }
 
         if (isset($measurementAnnotation->repositoryClass)) {
-            $class->setCustomRepositoryClassName($measurementAnnotation->repositoryClass);
+            $metadata->setCustomRepositoryClassName($measurementAnnotation->repositoryClass);
         }
 
         foreach ($reflClass->getProperties() as $property) {
@@ -79,7 +78,9 @@ class AnnotationDriver extends AbstractAnnotationDriver
             foreach ($this->reader->getPropertyAnnotations($property) as $annotation) {
                 if ($annotation instanceof Field) {
                     $mapping = array_replace($mapping, (array) $annotation);
-                    $class->mapField($mapping);
+
+                    // @phpstan-ignore-next-line: Array structure will be fixed inside mapField()
+                    $metadata->mapField($mapping);
                 }
             }
         }

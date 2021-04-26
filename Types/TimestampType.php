@@ -7,11 +7,6 @@ use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 
-/**
- * Class TimestampType
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 class TimestampType extends Type
 {
     private const RFC3339 = 'Y-m-d\TH:i:sP';

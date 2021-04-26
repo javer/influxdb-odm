@@ -2,11 +2,6 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-/**
- * Class BooleanType
- *
- * @package Javer\InfluxDB\ODM\Types
- */
 class BooleanType extends Type
 {
     /**

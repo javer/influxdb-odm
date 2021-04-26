@@ -6,12 +6,8 @@ use Doctrine\Common\Annotations\Annotation;
 use InfluxDB\Database;
 
 /**
- * Class Timestamp
- *
  * @Annotation
  * @Target("PROPERTY")
- *
- * @package Javer\InfluxDB\ODM\Mapping\Annotations
  */
 final class Timestamp extends Field
 {

@@ -11,9 +11,8 @@ use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\MeasurementManager;
 
 /**
- * Class Query
- *
- * @package Javer\InfluxDB\ODM\Query
+ * @template T of object
+ * @template-implements IteratorAggregate<T>
  */
 class Query implements IteratorAggregate
 {
@@ -44,14 +43,23 @@ class Query implements IteratorAggregate
 
     private MeasurementManager $measurementManager;
 
+    /**
+     * @phpstan-var ClassMetadata<T>
+     */
     private ClassMetadata $classMetadata;
 
     private Builder $queryBuilder;
 
+    /**
+     * @phpstan-var class-string<T>
+     */
     private string $className;
 
     private int $hydrationMode = self::HYDRATE_OBJECT;
 
+    /**
+     * @phpstan-var IteratorInterface<T>|null
+     */
     private ?IteratorInterface $iterator = null;
 
     /**
@@ -59,6 +67,8 @@ class Query implements IteratorAggregate
      *
      * @param MeasurementManager $measurementManager
      * @param string             $className
+     *
+     * @phpstan-param class-string<T> $className
      */
     public function __construct(MeasurementManager $measurementManager, string $className)
     {
@@ -92,6 +102,8 @@ class Query implements IteratorAggregate
      * Returns className.
      *
      * @return string
+     *
+     * @phpstan-return class-string<T>
      */
     public function getClassName(): string
     {
@@ -102,6 +114,8 @@ class Query implements IteratorAggregate
      * Returns classMetadata.
      *
      * @return ClassMetadata
+     *
+     * @phpstan-return ClassMetadata<T>
      */
     public function getClassMetadata(): ClassMetadata
     {
@@ -113,9 +127,11 @@ class Query implements IteratorAggregate
      *
      * @param integer $hydrationMode One of the Query::HYDRATE_* constants.
      *
-     * @return Query
+     * @return self
+     *
+     * @phpstan-return Query<T>
      */
-    public function setHydrationMode(int $hydrationMode): Query
+    public function setHydrationMode(int $hydrationMode): self
     {
         $this->hydrationMode = $hydrationMode;
 
@@ -135,7 +151,7 @@ class Query implements IteratorAggregate
     /**
      * Gets the raw results for the query.
      *
-     * @return array
+     * @return array<int, mixed>
      */
     public function getRawResult(): array
     {
@@ -145,7 +161,7 @@ class Query implements IteratorAggregate
     /**
      * Gets the list of results for the query.
      *
-     * @return array
+     * @return array<int, T>
      */
     public function getResult(): array
     {
@@ -155,7 +171,7 @@ class Query implements IteratorAggregate
     /**
      * Gets the array of results for the query.
      *
-     * @return array
+     * @return array<int, mixed>
      */
     public function getArrayResult(): array
     {
@@ -165,7 +181,7 @@ class Query implements IteratorAggregate
     /**
      * Gets the scalar results for the query.
      *
-     * @return array
+     * @return array<int, mixed>
      */
     public function getScalarResult(): array
     {
@@ -186,6 +202,8 @@ class Query implements IteratorAggregate
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return IteratorInterface<T>|null
      */
     public function getIterator(): ?IteratorInterface
     {
@@ -197,7 +215,7 @@ class Query implements IteratorAggregate
      *
      * @param integer|null $hydrationMode
      *
-     * @return array
+     * @return array<int, mixed>
      */
     public function execute(int $hydrationMode = null): array
     {
@@ -220,6 +238,8 @@ class Query implements IteratorAggregate
      * @param integer|null $hydrationMode
      *
      * @return IteratorInterface
+     *
+     * @phpstan-return IteratorInterface<T>
      */
     public function iterate(int $hydrationMode = null): IteratorInterface
     {
@@ -264,6 +284,8 @@ class Query implements IteratorAggregate
      * @param string $select
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function select(string $select): self
     {
@@ -279,6 +301,8 @@ class Query implements IteratorAggregate
      * @param mixed  $value
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function where(string $condition, $value = null): self
     {
@@ -304,6 +328,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function count(string $fieldName, bool $mappedField = true): self
     {
@@ -319,6 +345,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function median(string $fieldName, bool $mappedField = true): self
     {
@@ -334,6 +362,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function mean(string $fieldName, bool $mappedField = true): self
     {
@@ -349,6 +379,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function sum(string $fieldName, bool $mappedField = true): self
     {
@@ -364,6 +396,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function first(string $fieldName, bool $mappedField = true): self
     {
@@ -379,6 +413,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function last(string $fieldName, bool $mappedField = true): self
     {
@@ -394,6 +430,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function groupBy(string $field, bool $mappedField = true): self
     {
@@ -410,6 +448,8 @@ class Query implements IteratorAggregate
      * @param boolean $mappedField
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function orderBy(string $field, string $direction = 'ASC', bool $mappedField = true): self
     {
@@ -424,6 +464,8 @@ class Query implements IteratorAggregate
      * @param integer $offset
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function offset(int $offset): self
     {
@@ -438,6 +480,8 @@ class Query implements IteratorAggregate
      * @param integer $limit
      *
      * @return self
+     *
+     * @phpstan-return Query<T>
      */
     public function limit(int $limit): self
     {

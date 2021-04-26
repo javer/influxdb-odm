@@ -12,5 +12,8 @@
     <file>.</file>
     <exclude-pattern>/vendor</exclude-pattern>
 
-    <rule ref="vendor/swivl/php-coding-standard/Swivl/ruleset.xml" />
+    <rule ref="vendor/swivl/php-coding-standard/Swivl/ruleset.xml">
+        <exclude name="Squiz.Commenting.VariableComment.MissingVar"/>
+        <exclude name="Swivl.Commenting.UselessFunctionComment.UselessDocComment"/>
+    </rule>
 </ruleset>

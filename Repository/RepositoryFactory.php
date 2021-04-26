@@ -5,20 +5,22 @@ namespace Javer\InfluxDB\ODM\Repository;
 use Javer\InfluxDB\ODM\MeasurementManager;
 use RuntimeException;
 
-/**
- * Class RepositoryFactory
- *
- * @package Javer\InfluxDB\ODM\Repository
- */
 class RepositoryFactory implements RepositoryFactoryInterface
 {
     /**
      * @var MeasurementRepository[]
+     *
+     * @phpstan-var array<string, MeasurementRepository>
+     * @phpstan-ignore-next-line: Unable to specify T for MeasurementRepository because it is hashmap for all classes
      */
     private array $repositories = [];
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   MeasurementRepository<T>
      */
     public function getRepository(MeasurementManager $measurementManager, string $className): MeasurementRepository
     {
@@ -37,6 +39,10 @@ class RepositoryFactory implements RepositoryFactoryInterface
      * @return MeasurementRepository
      *
      * @throws RuntimeException
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   MeasurementRepository<T>
      */
     private function createRepository(
         MeasurementManager $measurementManager,

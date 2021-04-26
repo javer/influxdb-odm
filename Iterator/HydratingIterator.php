@@ -8,12 +8,13 @@ use Javer\InfluxDB\ODM\Hydrator\HydratorInterface;
 use RuntimeException;
 
 /**
- * Class HydratingIterator
- *
- * @package Javer\InfluxDB\ODM\Iterator
+ * @template-implements Iterator<mixed>
  */
 class HydratingIterator implements Iterator
 {
+    /**
+     * @phpstan-var Generator<int, mixed>|null
+     */
     private ?Generator $iterator;
 
     private HydratorInterface $hydrator;
@@ -23,6 +24,8 @@ class HydratingIterator implements Iterator
      *
      * @param iterable          $iterable
      * @param HydratorInterface $hydrator
+     *
+     * @phpstan-param iterable<int, mixed> $iterable
      */
     public function __construct(iterable $iterable, HydratorInterface $hydrator)
     {
@@ -81,7 +84,7 @@ class HydratingIterator implements Iterator
     /**
      * Returns iterator.
      *
-     * @return Generator
+     * @return Generator<int, mixed>
      *
      * @throws RuntimeException
      */
@@ -99,7 +102,9 @@ class HydratingIterator implements Iterator
      *
      * @param iterable $iterable
      *
-     * @return Generator
+     * @return Generator<int, mixed>
+     *
+     * @phpstan-param iterable<int, mixed> $iterable
      */
     private function wrapIterable(iterable $iterable): Generator
     {

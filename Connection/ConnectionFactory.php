@@ -5,15 +5,10 @@ namespace Javer\InfluxDB\ODM\Connection;
 use InfluxDB\Client;
 use InfluxDB\Database;
 
-/**
- * Class ConnectionFactory
- *
- * @package Javer\InfluxDB\ODM\Connection
- */
 class ConnectionFactory implements ConnectionFactoryInterface
 {
     /**
-     * @var Database[]
+     * @var array<string, Database>
      */
     private array $databases = [];
 
@@ -31,6 +26,8 @@ class ConnectionFactory implements ConnectionFactoryInterface
         }
 
         $database = Client::fromDSN($dsn);
+
+        assert($database instanceof Database);
 
         $this->databases[$dsn] = $database;
 

@@ -8,11 +8,6 @@ use Doctrine\Persistence\Mapping\ReflectionService;
 use Javer\InfluxDB\ODM\Mapping\Driver\AnnotationDriver;
 use ReflectionException;
 
-/**
- * Class ClassMetadataFactory
- *
- * @package Javer\InfluxDB\ODM\Mapping
- */
 class ClassMetadataFactory extends AbstractClassMetadataFactory
 {
     private AnnotationDriver $driver;
@@ -25,6 +20,22 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     public function __construct(AnnotationDriver $annotationDriver)
     {
         $this->driver = $annotationDriver;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   ClassMetadata<T>
+     */
+    public function getMetadataFor($className): ClassMetadata
+    {
+        $metadata = parent::getMetadataFor($className);
+
+        assert($metadata instanceof ClassMetadata);
+
+        return $metadata;
     }
 
     /**
@@ -95,6 +106,10 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   ClassMetadata<T>
      */
     protected function newClassMetadataInstance($className): ClassMetadata
     {

@@ -5,11 +5,6 @@ namespace Javer\InfluxDB\ODM\Connection;
 use InfluxDB\Client\Exception as ClientException;
 use InfluxDB\Database;
 
-/**
- * Interface ConnectionFactoryInterface
- *
- * @package Javer\InfluxDB\ODM\Connection
- */
 interface ConnectionFactoryInterface
 {
     /**

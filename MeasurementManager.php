@@ -20,11 +20,6 @@ use Javer\InfluxDB\ODM\Repository\RepositoryFactoryInterface;
 use Javer\InfluxDB\ODM\Types\Type;
 use RuntimeException;
 
-/**
- * Class MeasurementManager
- *
- * @package Javer\InfluxDB\ODM
- */
 class MeasurementManager implements ObjectManager
 {
     private ClassMetadataFactory $metadataFactory;
@@ -69,6 +64,10 @@ class MeasurementManager implements ObjectManager
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   ClassMetadata<T>
      */
     public function getClassMetadata($className): ClassMetadata
     {
@@ -91,6 +90,10 @@ class MeasurementManager implements ObjectManager
      * @param string $className
      *
      * @return Query
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   Query<T>
      */
     public function createQuery(string $className): Query
     {
@@ -101,6 +104,8 @@ class MeasurementManager implements ObjectManager
      * Load types.
      *
      * @param array $types
+     *
+     * @phpstan-param array<string, array{class: class-string}> $types
      */
     public static function loadTypes(array $types): void
     {
@@ -122,6 +127,8 @@ class MeasurementManager implements ObjectManager
      * @return HydratorInterface
      *
      * @throws RuntimeException
+     *
+     * @phpstan-param class-string $className
      */
     public function createHydrator(string $className, int $hydrationMode = Query::HYDRATE_OBJECT): HydratorInterface
     {
@@ -147,6 +154,10 @@ class MeasurementManager implements ObjectManager
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   ?T
      */
     public function find($className, $id): ?object
     {
@@ -165,6 +176,8 @@ class MeasurementManager implements ObjectManager
      * Persist all objects.
      *
      * @param iterable $objects
+     *
+     * @phpstan-param iterable<object> $objects
      */
     public function persistAll(iterable $objects): void
     {
@@ -182,8 +195,9 @@ class MeasurementManager implements ObjectManager
     /**
      * {@inheritDoc}
      */
-    public function merge($object): void
+    public function merge($object): object
     {
+        return $object;
     }
 
     /**
@@ -216,6 +230,10 @@ class MeasurementManager implements ObjectManager
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-template T of object
+     * @phpstan-param    class-string<T> $className
+     * @phpstan-return   MeasurementRepository<T>
      */
     public function getRepository($className): MeasurementRepository
     {

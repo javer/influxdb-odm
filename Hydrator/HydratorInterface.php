@@ -2,17 +2,12 @@
 
 namespace Javer\InfluxDB\ODM\Hydrator;
 
-/**
- * Interface HydratorInterface
- *
- * @package Javer\InfluxDB\ODM\Hydrator
- */
 interface HydratorInterface
 {
     /**
      * Hydrate data from the database.
      *
-     * @param array $data
+     * @param array<string, mixed> $data
      *
      * @return mixed
      */
