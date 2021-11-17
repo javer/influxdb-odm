@@ -112,7 +112,7 @@ class MeasurementManager implements ObjectManager
      *
      * @param array $types
      *
-     * @phpstan-param array<string, array{class: class-string}> $types
+     * @phpstan-param array<string, array{class: class-string<Type>}> $types
      */
     public static function loadTypes(array $types): void
     {

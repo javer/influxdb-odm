@@ -24,7 +24,7 @@ abstract class Type
     /**
      * The map of supported doctrine mapping types.
      *
-     * @var array<string, class-string>
+     * @var array<string, class-string<Type>>
      */
     private static array $typesMap = [
         self::TIMESTAMP => TimestampType::class,
@@ -71,7 +71,7 @@ abstract class Type
      * @param string $name
      * @param string $class
      *
-     * @phpstan-param class-string $class
+     * @phpstan-param class-string<Type> $class
      */
     public static function registerType(string $name, string $class): void
     {
@@ -161,7 +161,7 @@ abstract class Type
      *
      * @throws MappingException
      *
-     * @phpstan-param class-string $className
+     * @phpstan-param class-string<Type> $className
      */
     public static function addType(string $name, string $className): void
     {
@@ -192,7 +192,7 @@ abstract class Type
      *
      * @throws MappingException
      *
-     * @phpstan-param class-string $className
+     * @phpstan-param class-string<Type> $className
      */
     public static function overrideType(string $name, string $className): void
     {

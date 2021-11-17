@@ -101,6 +101,7 @@ final class ClassMetadata implements BaseClassMetadata
      *      precision?: string,
      *      countable?: bool,
      *      tag?: bool,
+     *      declared?: class-string,
      * }>
      */
     public array $fieldMappings = [];
