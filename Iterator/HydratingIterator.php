@@ -44,7 +44,7 @@ class HydratingIterator implements Iterator
     /**
      * {@inheritDoc}
      */
-    public function current()
+    public function current(): mixed
     {
         return $this->hydrator->hydrate($this->getIterator()->current());
     }
@@ -52,7 +52,7 @@ class HydratingIterator implements Iterator
     /**
      * {@inheritDoc}
      */
-    public function key()
+    public function key(): mixed
     {
         return $this->getIterator()->key();
     }

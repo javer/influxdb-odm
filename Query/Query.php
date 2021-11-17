@@ -203,11 +203,11 @@ class Query implements IteratorAggregate
     /**
      * {@inheritDoc}
      *
-     * @phpstan-return IteratorInterface<T>|null
+     * @phpstan-return IteratorInterface<T>
      */
-    public function getIterator(): ?IteratorInterface
+    public function getIterator(): IteratorInterface
     {
-        return $this->iterator;
+        return $this->iterator ?? $this->iterate();
     }
 
     /**

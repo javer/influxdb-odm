@@ -51,7 +51,7 @@ class UnrewindableIterator implements IteratorInterface
     /**
      * {@inheritDoc}
      */
-    public function current()
+    public function current(): mixed
     {
         return $this->getIterator()->current();
     }
@@ -59,7 +59,7 @@ class UnrewindableIterator implements IteratorInterface
     /**
      * {@inheritDoc}
      */
-    public function key()
+    public function key(): mixed
     {
         if ($this->iterator) {
             return $this->iterator->key();

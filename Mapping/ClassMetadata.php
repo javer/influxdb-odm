@@ -29,7 +29,8 @@ use ReflectionProperty;
  *    get the whole class name, namespace inclusive, prepended to every property in
  *    the serialized representation).
  *
- * @phpstan-template T of object
+ * @template-covariant T of object
+ * @template-implements BaseClassMetadata<T>
  */
 final class ClassMetadata implements BaseClassMetadata
 {

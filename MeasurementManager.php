@@ -22,6 +22,9 @@ use RuntimeException;
 
 class MeasurementManager implements ObjectManager
 {
+    /**
+     * @var ClassMetadataFactory<object>
+     */
     private ClassMetadataFactory $metadataFactory;
 
     private ConnectionFactoryInterface $connectionFactory;
@@ -56,6 +59,9 @@ class MeasurementManager implements ObjectManager
 
     /**
      * {@inheritDoc}
+     *
+     * @phpstan-return ClassMetadataFactory<object>
+     * @phpstan-ignore-next-line The method returns what is declared
      */
     public function getMetadataFactory(): ClassMetadataFactory
     {
@@ -71,6 +77,7 @@ class MeasurementManager implements ObjectManager
      */
     public function getClassMetadata($className): ClassMetadata
     {
+        // @phpstan-ignore-next-line: It returns ClassMetadata<T>
         return $this->metadataFactory->getMetadataFor($className);
     }
 
