@@ -2,13 +2,23 @@
 
 namespace Javer\InfluxDB\ODM\Mapping\Annotations;
 
+use Attribute;
+use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+
 /**
  * @Annotation
- * @Target("PROPERTY")
+ * @NamedArgumentConstructor
  */
+#[Attribute(Attribute::TARGET_PROPERTY)]
 final class Tag extends Field
 {
-    public ?string $type = 'string';
-
     public ?bool $tag = true;
+
+    public function __construct(
+        ?string $name = null,
+        ?string $type = 'string',
+    )
+    {
+        parent::__construct($name, $type);
+    }
 }

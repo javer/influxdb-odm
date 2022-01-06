@@ -71,6 +71,30 @@ class CpuLoad
 }
 ```
 
+or using PHP 8 Attributes:
+```php
+// src/Measurement/CpuLoad.php
+namespace App\Measurement;
+
+use Javer\InfluxDB\ODM\Mapping\Annotations as InfluxDB;
+
+#[InfluxDB\Measurement(name: 'cpu_load')]
+class CpuLoad
+{
+    #[InfluxDB\Timestamp(precision: 'u')]
+    private ?\DateTime $time = null;
+
+    #[InfluxDB\Tag(name: 'server_id', type: 'integer')]
+    private ?int $serverId = null;
+
+    #[InfluxDB\Tag(name: 'core_number', type: 'integer')]
+    private ?int $coreNumber = null;
+
+    #[InfluxDB\Field(name: 'load', type: 'float', countable: true)]
+    private ?float $load = null;
+}
+```
+
 Create Measurement Manager
 --------------------------
 
@@ -86,6 +110,21 @@ use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
 $dsn = 'influxdb://localhost:8086/metrics';
 $mappingDir = 'src/Measurements';
 $annotationDriver = new AnnotationDriver(new AnnotationReader(), $mappingDir);
+$connectionFactory = new ConnectionFactory();
+$repositoryFactory = new RepositoryFactory();
+$measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
+```
+
+or using PHP 8 Attributes:
+```php
+use Javer\InfluxDB\ODM\Connection\ConnectionFactory;
+use Javer\InfluxDB\ODM\Mapping\Driver\AttributeDriver;
+use Javer\InfluxDB\ODM\MeasurementManager;
+use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
+
+$dsn = 'influxdb://localhost:8086/metrics';
+$mappingDir = 'src/Measurements';
+$annotationDriver = new AttributeDriver($mappingDir);
 $connectionFactory = new ConnectionFactory();
 $repositoryFactory = new RepositoryFactory();
 $measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
