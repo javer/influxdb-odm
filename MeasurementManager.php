@@ -69,7 +69,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $className
      *
      * @phpstan-template T of object
      * @phpstan-param    class-string<T> $className
@@ -160,7 +160,8 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $className
+     * @param mixed  $id
      *
      * @phpstan-template T of object
      * @phpstan-param    class-string<T> $className
@@ -172,7 +173,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $object
      */
     public function persist($object): void
     {
@@ -192,7 +193,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $object
      */
     public function remove($object): void
     {
@@ -200,7 +201,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $object
      */
     public function merge($object): object
     {
@@ -208,7 +209,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param string|null $objectName
      */
     public function clear($objectName = null): void
     {
@@ -236,7 +237,7 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $className
      *
      * @phpstan-template T of object
      * @phpstan-param    class-string<T> $className
@@ -248,14 +249,14 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $obj
      */
     public function initializeObject($obj): void
     {
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $object
      */
     public function contains($object): bool
     {

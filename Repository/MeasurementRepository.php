@@ -81,6 +81,11 @@ class MeasurementRepository implements ObjectRepository
     /**
      * {@inheritDoc}
      *
+     * @param array<string, mixed>       $criteria
+     * @param array<string, string>|null $orderBy
+     * @param int|null                   $limit
+     * @param int|null                   $offset
+     *
      * @phpstan-return array<int, T>
      */
     public function findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null): array

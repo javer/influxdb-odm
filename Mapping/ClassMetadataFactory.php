@@ -50,11 +50,11 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $namespaceAlias
+     * @param string $simpleClassName
      */
     protected function getFqcnFromAlias($namespaceAlias, $simpleClassName): string
     {
-        // @phpstan-ignore-next-line: It is class-string
         return $namespaceAlias . '\\' . $simpleClassName;
     }
 
@@ -89,7 +89,10 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     }
 
     /**
-     * {@inheritDoc}
+     * @param BaseClassMetadata<T>      $class
+     * @param BaseClassMetadata<T>|null $parent
+     * @param bool                      $rootEntityFound
+     * @param string[]                  $nonSuperclassParents
      *
      * @throws MappingException
      */

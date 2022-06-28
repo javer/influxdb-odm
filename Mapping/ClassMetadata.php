@@ -163,7 +163,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function isIdentifier($fieldName): bool
     {
@@ -181,7 +181,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @return array<string|null>
      */
     public function getIdentifier(): array
     {
@@ -197,7 +197,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function hasField($fieldName): bool
     {
@@ -289,7 +289,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function hasAssociation($fieldName): bool
     {
@@ -297,7 +297,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function isSingleValuedAssociation($fieldName): bool
     {
@@ -305,7 +305,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function isCollectionValuedAssociation($fieldName): bool
     {
@@ -368,7 +368,9 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param object $object
+     *
+     * @return array<string, mixed>
      */
     public function getIdentifierValues($object): array
     {
@@ -470,7 +472,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $fieldName
      */
     public function getTypeOfField($fieldName): ?string
     {
@@ -478,7 +480,7 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $assocName
      */
     public function getAssociationTargetClass($assocName): ?string
     {
@@ -486,11 +488,11 @@ final class ClassMetadata implements BaseClassMetadata
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $assocName
      *
      * @throws BadMethodCallException
      */
-    public function isAssociationInverseSide($fieldName): bool
+    public function isAssociationInverseSide($assocName): bool
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
@@ -498,9 +500,11 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * {@inheritDoc}
      *
+     * @param string $assocName
+     *
      * @throws BadMethodCallException
      */
-    public function getAssociationMappedByTargetField($fieldName)
+    public function getAssociationMappedByTargetField($assocName)
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
@@ -617,7 +621,6 @@ final class ClassMetadata implements BaseClassMetadata
      */
     public function newInstance(): object
     {
-        // @phpstan-ignore-next-line: doctrine/instantiator is not fully PHPStan compliant
         return $this->instantiator->instantiate($this->name);
     }
 

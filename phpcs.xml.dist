@@ -11,6 +11,7 @@
 
     <file>.</file>
     <exclude-pattern>/vendor</exclude-pattern>
+    <exclude-pattern>Mapping/Driver/CompatibilityAnnotationDriver.php</exclude-pattern>
 
     <rule ref="vendor/swivl/php-coding-standard/Swivl/ruleset.xml">
         <exclude name="Squiz.Commenting.VariableComment.MissingVar"/>

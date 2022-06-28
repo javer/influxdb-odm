@@ -5,15 +5,32 @@ namespace Javer\InfluxDB\ODM\Mapping\Driver;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Persistence\Mapping\ClassMetadata as BaseClassMetadata;
-use Doctrine\Persistence\Mapping\Driver\AnnotationDriver as AbstractAnnotationDriver;
+use Doctrine\Persistence\Mapping\Driver\ColocatedMappingDriver;
 use Javer\InfluxDB\ODM\Mapping\Annotations\Field;
 use Javer\InfluxDB\ODM\Mapping\Annotations\Measurement;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\Mapping\MappingException;
 use ReflectionClass;
 
-class AnnotationDriver extends AbstractAnnotationDriver
+class AnnotationDriver extends CompatibilityAnnotationDriver
 {
+    use ColocatedMappingDriver;
+
+    protected Reader $reader;
+
+    /**
+     * Initializes a new AnnotationDriver that uses the given AnnotationReader for reading docblock annotations.
+     *
+     * @param Reader               $reader The AnnotationReader to use, duck-typed.
+     * @param string|string[]|null $paths  One or multiple paths where mapping classes can be found.
+     */
+    public function __construct(Reader $reader, mixed $paths = null)
+    {
+        $this->reader = $reader;
+
+        $this->addPaths((array) $paths);
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -37,7 +54,10 @@ class AnnotationDriver extends AbstractAnnotationDriver
      *
      * @throws MappingException
      *
-     * @phpstan-param class-string $className
+     * @phpstan-param class-string         $className
+     * @phpstan-param BaseClassMetadata<T> $metadata
+     *
+     * @template T of object
      */
     public function loadMetadataForClass($className, BaseClassMetadata $metadata): void
     {
