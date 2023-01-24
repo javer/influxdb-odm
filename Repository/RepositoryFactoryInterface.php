@@ -9,14 +9,11 @@ interface RepositoryFactoryInterface
     /**
      * Get repository for the className.
      *
-     * @param MeasurementManager $measurementManager
-     * @param string             $className
-     *
-     * @return MeasurementRepository
-     *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   MeasurementRepository<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return MeasurementRepository<T>
      */
     public function getRepository(MeasurementManager $measurementManager, string $className): MeasurementRepository;
 }

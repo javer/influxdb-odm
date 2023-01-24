@@ -2,20 +2,14 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-class FloatType extends Type
+final class FloatType extends Type
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToDatabaseValue($value): ?float
+    public function convertToDatabaseValue(mixed $value): ?float
     {
         return $value !== null ? (float) $value : null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToPHPValue($value): ?float
+    public function convertToPHPValue(mixed $value): ?float
     {
         return $value !== null && $value !== 'null' ? (float) $value : null;
     }

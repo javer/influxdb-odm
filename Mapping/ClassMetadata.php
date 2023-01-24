@@ -8,16 +8,14 @@ use Doctrine\Instantiator\InstantiatorInterface;
 use Doctrine\Persistence\Mapping\ClassMetadata as BaseClassMetadata;
 use Doctrine\Persistence\Mapping\ReflectionService;
 use Doctrine\Persistence\Mapping\RuntimeReflectionService;
-use InvalidArgumentException;
 use Javer\InfluxDB\ODM\Types\Type;
+use Javer\InfluxDB\ODM\Types\TypeEnum;
 use ReflectionClass;
 use ReflectionProperty;
 
 /**
- * Class ClassMetadata
- *
  * A <tt>ClassMetadata</tt> instance holds all the object-measurement mapping metadata
- * of a measurement and its associations.
+ * of a measurement.
  *
  * Once populated, ClassMetadata instances are usually cached in a serialized form.
  *
@@ -30,44 +28,30 @@ use ReflectionProperty;
  *    the serialized representation).
  *
  * @template-covariant T of object
+ *
  * @template-implements BaseClassMetadata<T>
  */
 final class ClassMetadata implements BaseClassMetadata
 {
     /**
-     * READ-ONLY: The name of the InfluxDB database the measurement is mapped to.
-     *
-     * @var string|null
-     */
-    public ?string $db;
-
-    /**
      * READ-ONLY: The name of the InfluxDB measurement the measurement is mapped to.
-     *
-     * @var string
      */
     public string $measurement;
 
     /**
      * READ-ONLY: The field name of the measurement identifier.
-     *
-     * @var string|null
      */
-    public ?string $identifier;
+    public ?string $identifier = null;
 
     /**
      * READ-ONLY: The name of the measurement class.
      *
-     * @var string
-     *
      * @phpstan-var class-string<T>
      */
-    public string $name;
+    public readonly string $name;
 
     /**
      * The name of the custom repository class used for the measurement class.
-     *
-     * @var string|null
      */
     public ?string $customRepositoryClassName = null;
 
@@ -84,24 +68,14 @@ final class ClassMetadata implements BaseClassMetadata
      *
      * The mapping definition array has the following values:
      *
-     * - <b>fieldName</b> (string)
-     * The name of the field in the Measurement.
-     *
-     * - <b>id</b> (boolean, optional)
-     * Marks the field as the primary key of the measurement.
-     * Multiple fields of a measurement can have the id attribute, forming a composite key.
-     *
-     * @var array
+     * @var mixed[]
      *
      * @phpstan-var array<string, array{
-     *      type: string,
+     *      type: TypeEnum,
      *      fieldName: string,
      *      name: string,
-     *      id?: bool,
-     *      precision?: string,
-     *      countable?: bool,
-     *      tag?: bool,
-     *      declared?: class-string,
+     *      countable?: bool|null,
+     *      tag?: bool|null,
      * }>
      */
     public array $fieldMappings = [];
@@ -110,23 +84,14 @@ final class ClassMetadata implements BaseClassMetadata
      * READ-ONLY: An array of field names. Used to look up field names from column names.
      * Keys are column names and values are field names.
      *
-     * @var array<string>
+     * @var string[]
      */
     public array $fieldNames = [];
 
     public ?string $countableFieldName = null;
 
     /**
-     * READ-ONLY: Whether this class describes the mapping of a mapped superclass.
-     *
-     * @var boolean
-     */
-    public bool $isMappedSuperclass = false;
-
-    /**
      * The ReflectionClass instance of the mapped class.
-     *
-     * @var ReflectionClass
      *
      * @phpstan-var ReflectionClass<T>
      */
@@ -137,9 +102,7 @@ final class ClassMetadata implements BaseClassMetadata
     private ReflectionService $reflectionService;
 
     /**
-     * ClassMetadata constructor.
-     *
-     * @param string $measurementClassName
+     * Constructor.
      *
      * @phpstan-param class-string<T> $measurementClassName
      */
@@ -162,30 +125,22 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->reflClass;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isIdentifier($fieldName): bool
+    public function isIdentifier(string $fieldName): bool
     {
         return $this->identifier === $fieldName;
     }
 
-    /**
-     * Sets the mapped identifier field of this class.
-     *
-     * @param string|null $identifier
-     */
     public function setIdentifier(?string $identifier): void
     {
         $this->identifier = $identifier;
     }
 
     /**
-     * @return array<string|null>
+     * {@inheritdoc}
      */
     public function getIdentifier(): array
     {
-        return [$this->identifier];
+        return $this->getIdentifierFieldNames();
     }
 
     /**
@@ -196,34 +151,9 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->identifier ? [$this->identifier] : [];
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function hasField($fieldName): bool
+    public function hasField(string $fieldName): bool
     {
         return isset($this->fieldMappings[$fieldName]);
-    }
-
-    /**
-     * Gets the ReflectionProperties of the mapped class.
-     *
-     * @return ReflectionProperty[]
-     */
-    public function getReflectionProperties(): array
-    {
-        return $this->reflFields;
-    }
-
-    /**
-     * Gets a ReflectionProperty for a specific field of the mapped class.
-     *
-     * @param string $name
-     *
-     * @return ReflectionProperty
-     */
-    public function getReflectionProperty(string $name): ReflectionProperty
-    {
-        return $this->reflFields[$name];
     }
 
     /**
@@ -236,119 +166,58 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->name;
     }
 
-    /**
-     * Returns the database this Measurement is mapped to.
-     *
-     * @return string|null
-     */
-    public function getDatabase(): ?string
-    {
-        return $this->db;
-    }
-
-    /**
-     * Set the database this Measurement is mapped to.
-     *
-     * @param string|null $db
-     */
-    public function setDatabase(?string $db): void
-    {
-        $this->db = $db;
-    }
-
-    /**
-     * Get the collection this Measurement is mapped to.
-     *
-     * @return string
-     */
     public function getMeasurement(): string
     {
         return $this->measurement;
     }
 
-    /**
-     * Sets the collection this Measurement is mapped to.
-     *
-     * @param string $name
-     *
-     * @throws InvalidArgumentException
-     */
     public function setMeasurement(string $name): void
     {
         $this->measurement = $name;
     }
 
-    /**
-     * Set customRepositoryClassName.
-     *
-     * @param string|null $repositoryClassName
-     */
     public function setCustomRepositoryClassName(?string $repositoryClassName): void
     {
         $this->customRepositoryClassName = $repositoryClassName;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function hasAssociation($fieldName): bool
+    public function hasAssociation(string $fieldName): bool
     {
         return false;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isSingleValuedAssociation($fieldName): bool
+    public function isSingleValuedAssociation(string $fieldName): bool
     {
         return false;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isCollectionValuedAssociation($fieldName): bool
+    public function isCollectionValuedAssociation(string $fieldName): bool
     {
         return false;
     }
 
     /**
      * Casts the identifier to its portable PHP type.
-     *
-     * @param mixed $id
-     *
-     * @return mixed $id
      */
-    public function getPHPIdentifierValue($id)
+    public function getPHPIdentifierValue(mixed $id): mixed
     {
-        $idType = $this->fieldMappings[$this->identifier]['type'];
-
-        return Type::getType($idType)->convertToPHPValue($id);
+        return Type::getType($this->fieldMappings[$this->identifier]['type'])->convertToPHPValue($id);
     }
 
     /**
      * Casts the identifier to its database type.
-     *
-     * @param mixed $id
-     *
-     * @return mixed $id
      */
-    public function getDatabaseIdentifierValue($id)
+    public function getDatabaseIdentifierValue(mixed $id): mixed
     {
-        $idType = $this->fieldMappings[$this->identifier]['type'];
-
-        return Type::getType($idType)->convertToDatabaseValue($id);
+        return Type::getType($this->fieldMappings[$this->identifier]['type'])->convertToDatabaseValue($id);
     }
 
     /**
      * Sets the measurement identifier of a measurement.
      *
      * The value will be converted to a PHP type before being set.
-     *
-     * @param object $measurement
-     * @param mixed  $id
      */
-    public function setIdentifierValue(object $measurement, $id): void
+    public function setIdentifierValue(object $measurement, mixed $id): void
     {
         $id = $this->getPHPIdentifierValue($id);
 
@@ -357,59 +226,40 @@ final class ClassMetadata implements BaseClassMetadata
 
     /**
      * Gets the measurement identifier as a PHP type.
-     *
-     * @param object $measurement
-     *
-     * @return mixed
      */
-    public function getIdentifierValue(object $measurement)
+    public function getIdentifierValue(object $measurement): mixed
     {
         return $this->reflFields[$this->identifier]->getValue($measurement);
     }
 
     /**
-     * @param object $object
-     *
-     * @return array<string, mixed>
+     * {@inheritdoc}
      */
-    public function getIdentifierValues($object): array
+    public function getIdentifierValues(object $object): array
     {
         return [$this->identifier => $this->getIdentifierValue($object)];
     }
 
     /**
      * Get the measurement identifier object as a database type.
-     *
-     * @param object $measurement
-     *
-     * @return mixed
      */
-    public function getIdentifierObject(object $measurement)
+    public function getIdentifierObject(object $measurement): mixed
     {
         return $this->getDatabaseIdentifierValue($this->getIdentifierValue($measurement));
     }
 
     /**
      * Sets the specified field to the specified value on the given measurement.
-     *
-     * @param object $measurement
-     * @param string $field
-     * @param mixed  $value
      */
-    public function setFieldValue(object $measurement, string $field, $value): void
+    public function setFieldValue(object $measurement, string $field, mixed $value): void
     {
         $this->reflFields[$field]->setValue($measurement, $value);
     }
 
     /**
      * Gets the specified field's value off the given measurement.
-     *
-     * @param object $measurement
-     * @param string $field
-     *
-     * @return mixed
      */
-    public function getFieldValue(object $measurement, string $field)
+    public function getFieldValue(object $measurement, string $field): mixed
     {
         return $this->reflFields[$field]->getValue($measurement);
     }
@@ -417,38 +267,26 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * Gets the mapping of a field.
      *
-     * @param string $fieldName
-     *
-     * @return array
+     * @return mixed[]
      *
      * @throws MappingException
      *
      * @phpstan-return array{
-     *      type: string,
+     *      type: TypeEnum,
      *      fieldName: string,
      *      name: string,
-     *      id?: bool,
-     *      precision?: string,
-     *      countable?: bool,
-     *      tag?: bool,
+     *      countable?: bool|null,
+     *      tag?: bool|null,
      * }
      */
     public function getFieldMapping(string $fieldName): array
     {
-        if (!isset($this->fieldMappings[$fieldName])) {
-            throw MappingException::mappingNotFound($this->name, $fieldName);
-        }
-
-        return $this->fieldMappings[$fieldName];
+        return $this->fieldMappings[$fieldName] ?? throw MappingException::mappingNotFound($this->name, $fieldName);
     }
 
     /**
      * Gets the field name for a column name.
      * If no field name can be found the column name is returned.
-     *
-     * @param string $columnName The column name.
-     *
-     * @return string The column alias.
      */
     public function getFieldName(string $columnName): string
     {
@@ -471,28 +309,20 @@ final class ClassMetadata implements BaseClassMetadata
         return [];
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function getTypeOfField($fieldName): ?string
+    public function getTypeOfField(string $fieldName): ?string
     {
-        return isset($this->fieldMappings[$fieldName]) ? $this->fieldMappings[$fieldName]['type'] : null;
+        return isset($this->fieldMappings[$fieldName]) ? $this->fieldMappings[$fieldName]['type']->value : null;
     }
 
-    /**
-     * @param string $assocName
-     */
-    public function getAssociationTargetClass($assocName): ?string
+    public function getAssociationTargetClass(string $assocName): ?string
     {
         return null;
     }
 
     /**
-     * @param string $assocName
-     *
      * @throws BadMethodCallException
      */
-    public function isAssociationInverseSide($assocName): bool
+    public function isAssociationInverseSide(string $assocName): bool
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
@@ -500,11 +330,9 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * {@inheritDoc}
      *
-     * @param string $assocName
-     *
      * @throws BadMethodCallException
      */
-    public function getAssociationMappedByTargetField($assocName)
+    public function getAssociationMappedByTargetField(string $assocName): string
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
@@ -512,22 +340,24 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * Map a field.
      *
-     * @param array $mapping
+     * @param mixed[] $mapping
      *
      * @throws MappingException
      *
      * @phpstan-param array{
-     *      type: string,
-     *      fieldName?: string,
-     *      name?: string,
-     *      id?: bool,
-     *      precision?: string,
-     *      countable?: bool,
-     *      tag?: bool,
+     *      fieldName?: string|null,
+     *      type?: TypeEnum|null,
+     *      name?: string|null,
+     *      countable?: bool|null,
+     *      tag?: bool|null,
      * } $mapping
      */
     public function mapField(array $mapping): void
     {
+        if (!isset($mapping['type'])) {
+            throw MappingException::missingFieldType($this->name);
+        }
+
         if (!isset($mapping['fieldName']) && isset($mapping['name'])) {
             $mapping['fieldName'] = $mapping['name'];
         }
@@ -540,12 +370,16 @@ final class ClassMetadata implements BaseClassMetadata
             $mapping['name'] = $mapping['fieldName'];
         }
 
-        if (isset($mapping['id']) && $mapping['id'] === true) {
+        if ($mapping['type'] === TypeEnum::TIMESTAMP) {
+            if ($this->identifier !== null && $this->identifier !== $mapping['fieldName']) {
+                MappingException::hasSeveralIdentifierFields($this->name);
+            }
+
             $this->identifier = $mapping['fieldName'];
         }
 
         if (isset($mapping['countable']) && $mapping['countable'] === true) {
-            if (($mapping['id'] ?? false) || ($mapping['tag'] ?? false)) {
+            if (($mapping['type'] === TypeEnum::TIMESTAMP) || ($mapping['tag'] ?? false)) {
                 throw MappingException::tagOrIdCannotBeCountable($this->name, $mapping['fieldName']);
             }
 
@@ -575,7 +409,7 @@ final class ClassMetadata implements BaseClassMetadata
      *      - reflClass (ReflectionClass)
      *      - reflFields (ReflectionProperty array)
      *
-     * @return array The names of all the fields that should be serialized.
+     * @return string[] The names of all the fields that should be serialized.
      */
     public function __sleep(): array
     {
@@ -584,8 +418,8 @@ final class ClassMetadata implements BaseClassMetadata
             'fieldNames',
             'identifier',
             'name',
-            'db',
             'measurement',
+            'countableFieldName',
         ];
 
         if ($this->customRepositoryClassName) {
@@ -606,7 +440,7 @@ final class ClassMetadata implements BaseClassMetadata
         $this->instantiator      = new Instantiator();
 
         foreach ($this->fieldMappings as $field => $mapping) {
-            $prop = $this->reflectionService->getAccessibleProperty($mapping['declared'] ?? $this->name, $field);
+            $prop = $this->reflectionService->getAccessibleProperty($this->name, $field);
             assert($prop instanceof ReflectionProperty);
             $this->reflFields[$field] = $prop;
         }
@@ -615,8 +449,6 @@ final class ClassMetadata implements BaseClassMetadata
     /**
      * Creates a new instance of the mapped class, without invoking the constructor.
      *
-     * @return object
-     *
      * @phpstan-return T
      */
     public function newInstance(): object
@@ -624,13 +456,6 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->instantiator->instantiate($this->name);
     }
 
-    /**
-     * Returns field database name.
-     *
-     * @param string $fieldName
-     *
-     * @return string
-     */
     public function getFieldDatabaseName(string $fieldName): string
     {
         $fieldMapping = $this->getFieldMapping($fieldName);
@@ -638,30 +463,14 @@ final class ClassMetadata implements BaseClassMetadata
         return $fieldMapping['name'];
     }
 
-    /**
-     * Returns field database value.
-     *
-     * @param string $fieldName
-     * @param mixed  $value
-     *
-     * @return mixed
-     */
-    public function getFieldDatabaseValue(string $fieldName, $value)
+    public function getFieldDatabaseValue(string $fieldName, mixed $value): mixed
     {
         $fieldMapping = $this->getFieldMapping($fieldName);
 
         return Type::getType($fieldMapping['type'])->convertToDatabaseValue($value);
     }
 
-    /**
-     * Returns field PHP value.
-     *
-     * @param string $fieldName
-     * @param mixed  $value
-     *
-     * @return mixed
-     */
-    public function getFieldPhpValue(string $fieldName, $value)
+    public function getFieldPhpValue(string $fieldName, mixed $value): mixed
     {
         $fieldMapping = $this->getFieldMapping($fieldName);
 
@@ -670,8 +479,6 @@ final class ClassMetadata implements BaseClassMetadata
 
     /**
      * Returns countable field name.
-     *
-     * @return string
      *
      * @throws MappingException
      */

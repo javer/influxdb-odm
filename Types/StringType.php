@@ -2,20 +2,14 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-class StringType extends Type
+final class StringType extends Type
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToDatabaseValue($value): ?string
+    public function convertToDatabaseValue(mixed $value): ?string
     {
         return $value !== null ? (string) $value : null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToPHPValue($value): ?string
+    public function convertToPHPValue(mixed $value): ?string
     {
         return $value !== null && $value !== 'null' ? (string) $value : null;
     }

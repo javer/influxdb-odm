@@ -2,20 +2,14 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-class BooleanType extends Type
+final class BooleanType extends Type
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToDatabaseValue($value): ?bool
+    public function convertToDatabaseValue(mixed $value): ?bool
     {
         return $value !== null ? (bool) $value : null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToPHPValue($value): ?bool
+    public function convertToPHPValue(mixed $value): ?bool
     {
         return $value !== null && $value !== 'null' ? (bool) $value : null;
     }

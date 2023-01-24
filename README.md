@@ -3,6 +3,9 @@ InfluxDB Object Document Mapper (ODM)
 
 The InfluxDB ODM is a library that provides a PHP object mapping functionality for InfluxDB.
 
+Version 2 of this library uses PHP client for the InfluxDB 2.x. Please take a look on forward compatibility description 
+of client library for [InfluxDB 1.8 API compatibility](https://github.com/influxdata/influxdb-client-php#influxdb-18-api-compatibility)
+
 [![Build Status](https://secure.travis-ci.org/javer/influxdb-odm.png?branch=master)](http://travis-ci.org/javer/influxdb-odm)
 
 Installation
@@ -36,61 +39,27 @@ of a InfluxDB Measurement.
 For Doctrine to be able to do this, you have to create "metadata", or
 configuration that tells Doctrine exactly how the `CpuLoad` class and its
 properties should be *mapped* to InfluxDB. This metadata can be specified
-directly inside the `CpuLoad` class via annotations:
+directly inside the `CpuLoad` class via attributes:
 
 ```php
 // src/Measurement/CpuLoad.php
 namespace App\Measurement;
 
-use Javer\InfluxDB\ODM\Mapping\Annotations as InfluxDB;
+use Javer\InfluxDB\ODM\Mapping\Attributes as InfluxDB;
 
-/**
- * @InfluxDB\Measurement(name="cpu_load")
- */
+#[InfluxDB\Measurement(name: "cpu_load")]
 class CpuLoad
 {
-    /**
-     * @InfluxDB\Timestamp(precision="u")
-     */
+    #[InfluxDB\Timestamp]
     private ?\DateTime $time = null;
 
-    /**
-     * @InfluxDB\Tag(name="server_id", type="integer")
-     */
+    #[InfluxDB\Tag(name: "server_id")]
     private ?int $serverId = null;
 
-    /**
-     * @InfluxDB\Tag(name="core_number", type="integer")
-     */
+    #[InfluxDB\Tag(name: "core_number")]
     private ?int $coreNumber = null;
 
-    /**
-     * @InfluxDB\Field(name="load", type="float", countable=true)
-     */
-    private ?float $load = null;
-}
-```
-
-or using PHP 8 Attributes:
-```php
-// src/Measurement/CpuLoad.php
-namespace App\Measurement;
-
-use Javer\InfluxDB\ODM\Mapping\Annotations as InfluxDB;
-
-#[InfluxDB\Measurement(name: 'cpu_load')]
-class CpuLoad
-{
-    #[InfluxDB\Timestamp(precision: 'u')]
-    private ?\DateTime $time = null;
-
-    #[InfluxDB\Tag(name: 'server_id', type: 'integer')]
-    private ?int $serverId = null;
-
-    #[InfluxDB\Tag(name: 'core_number', type: 'integer')]
-    private ?int $coreNumber = null;
-
-    #[InfluxDB\Field(name: 'load', type: 'float', countable: true)]
+    #[InfluxDB\Field(countable: true)]
     private ?float $load = null;
 }
 ```
@@ -101,33 +70,20 @@ Create Measurement Manager
 If you are not using `JaverInfluxDBBundle`, you have to create an instance of MeasurementManager:
 
 ```php
-use Doctrine\Common\Annotations\AnnotationReader;
-use Javer\InfluxDB\ODM\Connection\ConnectionFactory;
-use Javer\InfluxDB\ODM\Mapping\Driver\AnnotationDriver;
-use Javer\InfluxDB\ODM\MeasurementManager;
-use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
-
-$dsn = 'influxdb://localhost:8086/metrics';
-$mappingDir = 'src/Measurements';
-$annotationDriver = new AnnotationDriver(new AnnotationReader(), $mappingDir);
-$connectionFactory = new ConnectionFactory();
-$repositoryFactory = new RepositoryFactory();
-$measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
-```
-
-or using PHP 8 Attributes:
-```php
-use Javer\InfluxDB\ODM\Connection\ConnectionFactory;
+use InfluxDB2\Model\WritePrecision;
+use Javer\InfluxDB\ODM\Client\ClientFactory;
 use Javer\InfluxDB\ODM\Mapping\Driver\AttributeDriver;
+use Javer\InfluxDB\ODM\Mapping\Driver\AttributeReader;
 use Javer\InfluxDB\ODM\MeasurementManager;
 use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
 
-$dsn = 'influxdb://localhost:8086/metrics';
+$url = 'http://localhost:8086';
+$bucket = 'metrics';
 $mappingDir = 'src/Measurements';
-$annotationDriver = new AttributeDriver($mappingDir);
-$connectionFactory = new ConnectionFactory();
+$attributeDriver = new AttributeDriver(new AttributeReader(), [$mappingDir]);
+$clientFactory = new ClientFactory();
 $repositoryFactory = new RepositoryFactory();
-$measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
+$measurementManager = new MeasurementManager($attributeDriver, $clientFactory, $repositoryFactory, $url, $bucket, WritePrecision::NS);
 ```
 
 Persisting Objects to InfluxDB
@@ -256,11 +212,9 @@ To do this, add the name of the repository class to your mapping definition.
 namespace App\Measurement;
 
 use App\Repository\CpuLoadRepository;
-use Javer\InfluxDB\ODM\Mapping\Annotations as InfluxDB;
+use Javer\InfluxDB\ODM\Mapping\Attributes as InfluxDB;
 
-/**
- * @InfluxDB\Measurement(name="cpu_load", repositoryClass=CpuLoadRepository::class)
- */
+#[InfluxDB\Measurement(name: "cpu_load", repositoryClass: CpuLoadRepository::class)]
 class CpuLoad
 {
     // ...

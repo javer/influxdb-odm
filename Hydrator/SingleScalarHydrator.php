@@ -4,21 +4,16 @@ namespace Javer\InfluxDB\ODM\Hydrator;
 
 /**
  * @template T of object
- * @template-extends  AbstractHydrator<T>
+ *
+ * @template-extends AbstractHydrator<T>
  */
-class SingleScalarHydrator extends AbstractHydrator
+final class SingleScalarHydrator extends AbstractHydrator
 {
     /**
-     * Hydrate data from the database.
-     *
-     * @param array<string, mixed> $data
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
-    public function hydrate(array $data)
+    public function hydrate(array $data): mixed
     {
-        $result = array_values($data);
-
-        return count($result) > 1 ? $result[1] : null;
+        return $data['_value'] ?? null;
     }
 }

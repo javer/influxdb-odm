@@ -6,7 +6,7 @@ use Generator;
 use LogicException;
 use RuntimeException;
 
-class UnrewindableIterator implements IteratorInterface
+final class UnrewindableIterator implements IteratorInterface
 {
     /**
      * @phpstan-var Generator<int, mixed>|null
@@ -16,7 +16,7 @@ class UnrewindableIterator implements IteratorInterface
     private bool $iteratorAdvanced = false;
 
     /**
-     * UnrewindableIterator constructor.
+     * Constructor.
      *
      * @param iterable $iterable
      *
@@ -48,29 +48,16 @@ class UnrewindableIterator implements IteratorInterface
         return iterator_to_array($toArray());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function current(): mixed
     {
         return $this->getIterator()->current();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function key(): mixed
     {
-        if ($this->iterator) {
-            return $this->iterator->key();
-        }
-
-        return null;
+        return $this->iterator?->key();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function next(): void
     {
         if (!$this->iterator) {
@@ -80,17 +67,11 @@ class UnrewindableIterator implements IteratorInterface
         $this->iterator->next();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function rewind(): void
     {
         $this->preventRewinding(__METHOD__);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function valid(): bool
     {
         return $this->key() !== null;
@@ -98,8 +79,6 @@ class UnrewindableIterator implements IteratorInterface
 
     /**
      * Prevent rewinding.
-     *
-     * @param string $method
      *
      * @throws LogicException
      */
