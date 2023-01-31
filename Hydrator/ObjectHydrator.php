@@ -4,16 +4,13 @@ namespace Javer\InfluxDB\ODM\Hydrator;
 
 /**
  * @template T of object
- * @template-extends  AbstractHydrator<T>
+ *
+ * @template-extends AbstractHydrator<T>
  */
-class ObjectHydrator extends AbstractHydrator
+final class ObjectHydrator extends AbstractHydrator
 {
     /**
-     * Hydrate data from the database.
-     *
-     * @param array<string, mixed> $data
-     *
-     * @return object
+     * {@inheritdoc}
      *
      * @phpstan-return T
      */
@@ -28,7 +25,7 @@ class ObjectHydrator extends AbstractHydrator
                 $this->classMetadata->setFieldValue(
                     $instance,
                     $fieldName,
-                    $this->classMetadata->getFieldPhpValue($fieldName, $value)
+                    $this->classMetadata->getFieldPhpValue($fieldName, $value),
                 );
             }
         }

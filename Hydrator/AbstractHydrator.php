@@ -10,19 +10,13 @@ use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 abstract class AbstractHydrator implements HydratorInterface
 {
     /**
-     * @phpstan-var ClassMetadata<T>
-     */
-    protected ClassMetadata $classMetadata;
-
-    /**
-     * AbstractHydrator constructor.
-     *
-     * @param ClassMetadata $classMetadata
+     * Constructor.
      *
      * @phpstan-param ClassMetadata<T> $classMetadata
      */
-    public function __construct(ClassMetadata $classMetadata)
+    public function __construct(
+        protected readonly ClassMetadata $classMetadata,
+    )
     {
-        $this->classMetadata = $classMetadata;
     }
 }

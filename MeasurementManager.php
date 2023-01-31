@@ -3,58 +3,49 @@
 namespace Javer\InfluxDB\ODM;
 
 use Doctrine\Persistence\ObjectManager;
-use InfluxDB\Database;
-use Javer\InfluxDB\ODM\Connection\ConnectionFactoryInterface;
+use Javer\InfluxDB\ODM\Client\ClientFactoryInterface;
+use Javer\InfluxDB\ODM\Client\ClientInterface;
 use Javer\InfluxDB\ODM\Hydrator\ArrayHydrator;
 use Javer\InfluxDB\ODM\Hydrator\HydratorInterface;
 use Javer\InfluxDB\ODM\Hydrator\ObjectHydrator;
 use Javer\InfluxDB\ODM\Hydrator\ScalarHydrator;
 use Javer\InfluxDB\ODM\Hydrator\SingleScalarHydrator;
+use Javer\InfluxDB\ODM\Logger\InfluxLoggerInterface;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadataFactory;
-use Javer\InfluxDB\ODM\Mapping\Driver\AnnotationDriver;
+use Javer\InfluxDB\ODM\Mapping\Driver\AttributeDriver;
 use Javer\InfluxDB\ODM\Persister\MeasurementPersister;
 use Javer\InfluxDB\ODM\Query\Query;
 use Javer\InfluxDB\ODM\Repository\MeasurementRepository;
 use Javer\InfluxDB\ODM\Repository\RepositoryFactoryInterface;
 use Javer\InfluxDB\ODM\Types\Type;
+use Javer\InfluxDB\ODM\Types\TypeEnum;
 use RuntimeException;
+use ValueError;
 
-class MeasurementManager implements ObjectManager
+final class MeasurementManager implements ObjectManager
 {
     /**
      * @var ClassMetadataFactory<object>
      */
-    private ClassMetadataFactory $metadataFactory;
+    private readonly ClassMetadataFactory $metadataFactory;
 
-    private ConnectionFactoryInterface $connectionFactory;
+    private readonly MeasurementPersister $measurementPersister;
 
-    private RepositoryFactoryInterface $repositoryFactory;
+    private readonly ClientInterface $client;
 
-    private MeasurementPersister $measurementPersister;
-
-    private string $url;
-
-    /**
-     * MeasurementManager constructor.
-     *
-     * @param AnnotationDriver           $annotationDriver
-     * @param ConnectionFactoryInterface $connectionFactory
-     * @param RepositoryFactoryInterface $repositoryFactory
-     * @param string                     $url
-     */
     public function __construct(
-        AnnotationDriver $annotationDriver,
-        ConnectionFactoryInterface $connectionFactory,
-        RepositoryFactoryInterface $repositoryFactory,
-        string $url
+        AttributeDriver $attributeDriver,
+        private readonly ClientFactoryInterface $clientFactory,
+        private readonly RepositoryFactoryInterface $repositoryFactory,
+        private readonly string $dsn,
+        private readonly string $writePrecision,
+        private readonly ?InfluxLoggerInterface $logger,
     )
     {
-        $this->metadataFactory = new ClassMetadataFactory($annotationDriver);
-        $this->repositoryFactory = $repositoryFactory;
-        $this->connectionFactory = $connectionFactory;
+        $this->metadataFactory = new ClassMetadataFactory($attributeDriver);
         $this->measurementPersister = new MeasurementPersister($this);
-        $this->url = $url;
+        $this->client = $this->clientFactory->createClient($this->dsn, $this->writePrecision, $this->logger);
     }
 
     /**
@@ -69,38 +60,33 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * @param string $className
+     * {@inheritDoc}
      *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   ClassMetadata<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return ClassMetadata<T>
      */
-    public function getClassMetadata($className): ClassMetadata
+    public function getClassMetadata(string $className): ClassMetadata
     {
         // @phpstan-ignore-next-line: It returns ClassMetadata<T>
         return $this->metadataFactory->getMetadataFor($className);
     }
 
-    /**
-     * Returns database.
-     *
-     * @return Database
-     */
-    public function getDatabase(): Database
+    public function getClient(): ClientInterface
     {
-        return $this->connectionFactory->createConnection($this->url);
+        return $this->client;
     }
 
     /**
      * Creates a new query.
      *
-     * @param string $className
-     *
-     * @return Query
-     *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   Query<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return Query<T>
      */
     public function createQuery(string $className): Query
     {
@@ -110,28 +96,23 @@ class MeasurementManager implements ObjectManager
     /**
      * Load types.
      *
-     * @param array $types
+     * @param mixed[] $types
      *
      * @phpstan-param array<string, array{class: class-string<Type>}> $types
      */
     public static function loadTypes(array $types): void
     {
         foreach ($types as $typeName => $typeConfig) {
-            if (Type::hasType($typeName)) {
-                Type::overrideType($typeName, $typeConfig['class']);
-            } else {
-                Type::addType($typeName, $typeConfig['class']);
+            try {
+                Type::setType(TypeEnum::from($typeName), $typeConfig['class']);
+            } catch (ValueError) {
+                // Ignore invalid types.
             }
         }
     }
 
     /**
      * Create a new Hydrator for the className.
-     *
-     * @param string  $className
-     * @param integer $hydrationMode
-     *
-     * @return HydratorInterface
      *
      * @throws RuntimeException
      *
@@ -141,41 +122,30 @@ class MeasurementManager implements ObjectManager
     {
         $classMetadata = $this->getClassMetadata($className);
 
-        switch ($hydrationMode) {
-            case Query::HYDRATE_OBJECT:
-                return new ObjectHydrator($classMetadata);
-
-            case Query::HYDRATE_ARRAY:
-                return new ArrayHydrator($classMetadata);
-
-            case Query::HYDRATE_SCALAR:
-                return new ScalarHydrator($classMetadata);
-
-            case Query::HYDRATE_SINGLE_SCALAR:
-                return new SingleScalarHydrator($classMetadata);
-
-            default:
-                throw new RuntimeException(sprintf('Unknown hydration mode: %d', $hydrationMode));
-        }
+        return match ($hydrationMode) {
+            Query::HYDRATE_OBJECT => new ObjectHydrator($classMetadata),
+            Query::HYDRATE_ARRAY => new ArrayHydrator($classMetadata),
+            Query::HYDRATE_SCALAR => new ScalarHydrator($classMetadata),
+            Query::HYDRATE_SINGLE_SCALAR => new SingleScalarHydrator($classMetadata),
+            default => throw new RuntimeException(sprintf('Unknown hydration mode: %d', $hydrationMode)),
+        };
     }
 
     /**
-     * @param string $className
-     * @param mixed  $id
+     * {@inheritdoc}
      *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   ?T
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return ?T
      */
-    public function find($className, $id): ?object
+    public function find(string $className, mixed $id): ?object
     {
         return $this->getRepository($className)->find($id);
     }
 
-    /**
-     * @param object $object
-     */
-    public function persist($object): void
+    public function persist(object $object): void
     {
         $this->measurementPersister->persist([$object]);
     }
@@ -192,73 +162,46 @@ class MeasurementManager implements ObjectManager
         $this->measurementPersister->persist($objects);
     }
 
-    /**
-     * @param object $object
-     */
-    public function remove($object): void
+    public function remove(object $object): void
     {
         $this->measurementPersister->remove($object);
     }
 
-    /**
-     * @param object $object
-     */
-    public function merge($object): object
-    {
-        return $object;
-    }
-
-    /**
-     * @param string|null $objectName
-     */
-    public function clear($objectName = null): void
+    public function clear(): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function detach($object): void
+    public function detach(object $object): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function refresh($object): void
+    public function refresh(object $object): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function flush(): void
     {
     }
 
     /**
-     * @param string $className
+     * {@inheritdoc}
      *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   MeasurementRepository<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return MeasurementRepository<T>
      */
-    public function getRepository($className): MeasurementRepository
+    public function getRepository(string $className): MeasurementRepository
     {
         return $this->repositoryFactory->getRepository($this, $className);
     }
 
-    /**
-     * @param object $obj
-     */
-    public function initializeObject($obj): void
+    public function initializeObject(object $obj): void
     {
     }
 
-    /**
-     * @param object $object
-     */
-    public function contains($object): bool
+    public function contains(object $object): bool
     {
         return true;
     }

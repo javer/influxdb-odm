@@ -11,5 +11,5 @@ interface HydratorInterface
      *
      * @return mixed
      */
-    public function hydrate(array $data);
+    public function hydrate(array $data): mixed;
 }

@@ -2,34 +2,17 @@
 
 namespace Javer\InfluxDB\ODM\Persister;
 
-use InfluxDB\Database;
-use InfluxDB\Point;
+use InfluxDB2\Point;
 use Javer\InfluxDB\ODM\MeasurementManager;
+use Javer\InfluxDB\ODM\Model\DeletionPoint;
 use Javer\InfluxDB\ODM\Types\Type;
 
-class MeasurementPersister
+final class MeasurementPersister
 {
-    private const PRECISION_MULTIPLIERS = [
-        Database::PRECISION_NANOSECONDS => 10 ** 9,
-        Database::PRECISION_MICROSECONDS => 10 ** 6,
-        Database::PRECISION_MILLISECONDS => 10 ** 3,
-        Database::PRECISION_SECONDS => 1,
-        Database::PRECISION_MINUTES => 1 / 60,
-        Database::PRECISION_HOURS => 1 / 3600,
-    ];
-
-    private MeasurementManager $measurementManager;
-
-    private string $precision;
-
-    /**
-     * MeasurementPersister constructor.
-     *
-     * @param MeasurementManager $measurementManager
-     */
-    public function __construct(MeasurementManager $measurementManager)
+    public function __construct(
+        private readonly MeasurementManager $measurementManager,
+    )
     {
-        $this->measurementManager = $measurementManager;
     }
 
     /**
@@ -47,79 +30,79 @@ class MeasurementPersister
             $points[] = $this->mapObjectToPoint($object);
         }
 
-        $this->measurementManager->getDatabase()->writePoints($points, $this->precision);
+        $client = $this->measurementManager->getClient();
+        $client->write($points);
     }
 
     /**
      * Remove object from the database.
-     *
-     * @param object $object
      */
     public function remove(object $object): void
     {
-        $classMetadata = $this->measurementManager->getClassMetadata(get_class($object));
-
-        $tags = [];
-        $timestamp = null;
-
-        foreach ($classMetadata->getFieldNames() as $fieldName) {
-            $fieldMapping = $classMetadata->getFieldMapping($fieldName);
-            $fieldValue = $classMetadata->getFieldValue($object, $fieldName);
-            $type = $fieldMapping['type'];
-            $name = $fieldMapping['name'];
-            $value = Type::getType($type)->convertToDatabaseValue($fieldValue);
-
-            if ($fieldMapping['id'] ?? false) {
-                $timestamp = $value;
-            } elseif ($fieldMapping['tag'] ?? false) {
-                $tags[$name] = $value;
-            }
-        }
-
-        $query = sprintf("DELETE FROM %s WHERE time = '%s'", $classMetadata->getMeasurement(), $timestamp);
-
-        foreach ($tags as $tagName => $tagValue) {
-            $query .= sprintf(" AND %s = '%s'", $tagName, addslashes($tagValue));
-        }
-
-        $this->measurementManager->getDatabase()->query($query);
+        $client = $this->measurementManager->getClient();
+        $client->delete([$this->mapToDeletionPoint($object)]);
     }
 
-    /**
-     * Map object to point.
-     *
-     * @param object $object
-     *
-     * @return Point
-     */
     private function mapObjectToPoint(object $object): Point
     {
-        $classMetadata = $this->measurementManager->getClassMetadata(get_class($object));
+        $classMetadata = $this->measurementManager->getClassMetadata($object::class);
 
         $tags = [];
         $fields = [];
         $timestamp = null;
 
         foreach ($classMetadata->getFieldNames() as $fieldName) {
-            $fieldMapping = $classMetadata->getFieldMapping($fieldName);
             $fieldValue = $classMetadata->getFieldValue($object, $fieldName);
-            $type = $fieldMapping['type'];
+
+            if ($classMetadata->identifier === $fieldName) {
+                $timestamp = (int) $fieldValue->format('Uu000');
+
+                continue;
+            }
+
+            $fieldMapping = $classMetadata->getFieldMapping($fieldName);
             $name = $fieldMapping['name'];
-            $value = Type::getType($type)->convertToDatabaseValue($fieldValue);
+            $value = Type::getType($fieldMapping['type'])->convertToDatabaseValue($fieldValue);
 
-            if ($fieldMapping['id'] ?? false) {
-                $this->precision = $fieldMapping['precision'] ?? Database::PRECISION_MICROSECONDS;
-
-                $timestamp = (int) ($fieldValue->format('U.u') * self::PRECISION_MULTIPLIERS[$this->precision]);
-            } elseif ($fieldMapping['tag'] ?? false) {
+            if ($fieldMapping['tag'] ?? false) {
                 if ($value !== null) {
-                    $tags[$name] = $value;
+                    $tags[$name] = (string) $value;
                 }
             } elseif ($value !== null) {
                 $fields[$name] = $value;
             }
         }
 
-        return new Point($classMetadata->getMeasurement(), null, $tags, $fields, $timestamp);
+        return new Point($classMetadata->getMeasurement(), $tags, $fields, $timestamp);
+    }
+
+    private function mapToDeletionPoint(object $object): DeletionPoint
+    {
+        $classMetadata = $this->measurementManager->getClassMetadata($object::class);
+
+        $tags = [];
+        $timestamp = null;
+
+        foreach ($classMetadata->getFieldNames() as $fieldName) {
+            $fieldValue = $classMetadata->getFieldValue($object, $fieldName);
+
+            if ($classMetadata->identifier === $fieldName) {
+                $timestamp = $fieldValue->format('U.u');
+
+                continue;
+            }
+
+            $fieldMapping = $classMetadata->getFieldMapping($fieldName);
+
+            if ($fieldMapping['tag'] ?? false) {
+                $value = Type::getType($fieldMapping['type'])->convertToDatabaseValue($fieldValue);
+
+                if ($value !== null) {
+                    $tags[$fieldMapping['name']] = (string) $value;
+                }
+            }
+        }
+
+        return new DeletionPoint($classMetadata->getMeasurement(), (float) $timestamp, $tags);
     }
 }

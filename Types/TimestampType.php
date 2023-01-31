@@ -4,21 +4,19 @@ namespace Javer\InfluxDB\ODM\Types;
 
 use DateTime;
 use DateTimeInterface;
-use DateTimeZone;
+use Exception;
 use InvalidArgumentException;
 
-class TimestampType extends Type
+final class TimestampType extends Type
 {
-    private const RFC3339 = 'Y-m-d\TH:i:sP';
     private const RFC3339_MICROSECONDS = 'Y-m-d\TH:i:s.uP';
-    private const TIMEZONE = 'UTC';
 
     /**
      * {@inheritDoc}
      *
      * @throws InvalidArgumentException
      */
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue(mixed $value): float|string|null
     {
         if ($value === null || is_float($value) || is_string($value)) {
             return $value;
@@ -38,19 +36,15 @@ class TimestampType extends Type
      *
      * @throws InvalidArgumentException
      */
-    public function convertToPHPValue($value)
+    public function convertToPHPValue(mixed $value): ?DateTimeInterface
     {
         if ($value === null || $value instanceof DateTimeInterface) {
             return $value;
         }
 
-        $val = DateTime::createFromFormat(self::RFC3339_MICROSECONDS, $value, new DateTimeZone(self::TIMEZONE));
-
-        if ($val === false) {
-            $val = DateTime::createFromFormat(self::RFC3339, $value, new DateTimeZone(self::TIMEZONE));
-        }
-
-        if ($val === false) {
+        try {
+            $value = new DateTime($value);
+        } catch (Exception) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Could not convert %s to a date value',
@@ -59,6 +53,6 @@ class TimestampType extends Type
             );
         }
 
-        return $val;
+        return $value;
     }
 }

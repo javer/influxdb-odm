@@ -2,20 +2,14 @@
 
 namespace Javer\InfluxDB\ODM\Types;
 
-class IntegerType extends Type
+final class IntegerType extends Type
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToDatabaseValue($value): ?int
+    public function convertToDatabaseValue(mixed $value): ?int
     {
         return $value !== null ? (int) $value : null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function convertToPHPValue($value): ?int
+    public function convertToPHPValue(mixed $value): ?int
     {
         return $value !== null && $value !== 'null' ? (int) $value : null;
     }

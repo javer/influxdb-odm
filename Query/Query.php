@@ -2,8 +2,10 @@
 
 namespace Javer\InfluxDB\ODM\Query;
 
-use InfluxDB\Query\Builder;
+use DateTime;
+use DateTimeInterface;
 use IteratorAggregate;
+use Javer\InfluxDB\ODM\InfluxDBException;
 use Javer\InfluxDB\ODM\Iterator\HydratingIterator;
 use Javer\InfluxDB\ODM\Iterator\IteratorInterface;
 use Javer\InfluxDB\ODM\Iterator\UnrewindableIterator;
@@ -12,9 +14,10 @@ use Javer\InfluxDB\ODM\MeasurementManager;
 
 /**
  * @template T of object
+ *
  * @template-implements IteratorAggregate<T>
  */
-class Query implements IteratorAggregate
+final class Query implements IteratorAggregate
 {
     /**
      * Skip hydration, return plain result.
@@ -41,19 +44,10 @@ class Query implements IteratorAggregate
      */
     public const HYDRATE_SINGLE_SCALAR = 4;
 
-    private MeasurementManager $measurementManager;
-
     /**
      * @phpstan-var ClassMetadata<T>
      */
-    private ClassMetadata $classMetadata;
-
-    private Builder $queryBuilder;
-
-    /**
-     * @phpstan-var class-string<T>
-     */
-    private string $className;
+    private readonly ClassMetadata $classMetadata;
 
     private int $hydrationMode = self::HYDRATE_OBJECT;
 
@@ -63,45 +57,77 @@ class Query implements IteratorAggregate
     private ?IteratorInterface $iterator = null;
 
     /**
-     * Query constructor.
+     * @var string[]
+     */
+    private array $select = [];
+
+    /**
+     * @var string[]
+     */
+    private array $where = [];
+
+    private string $from;
+
+    /**
+     * @var string[]
      *
-     * @param MeasurementManager $measurementManager
-     * @param string             $className
+     * @phpstan-var array<int, array{field: string, desc: bool}>
+     */
+    private array $orderBy = [];
+
+    /**
+     * @var string[]
+     */
+    private array $groupBy = [];
+
+    private int $offset = 0;
+
+    private int $limit = 0;
+
+    private int $dateFrom = 0;
+
+    private int $dateTo;
+
+    private ?AggregateEnum $aggregate = null;
+
+    private ?string $aggregateField = null;
+
+    private ?string $aggregatePeriod = null;
+
+    /**
+     * @var string[]
+     */
+    private array $imports = [];
+
+    /**
+     * @var mixed[]
+     *
+     * @phpstan-var array<string, mixed>
+     */
+    private array $fills = [];
+
+    /**
+     * Constructor.
      *
      * @phpstan-param class-string<T> $className
      */
-    public function __construct(MeasurementManager $measurementManager, string $className)
+    public function __construct(
+        private readonly MeasurementManager $measurementManager,
+        private readonly string $className,
+    )
     {
-        $this->measurementManager = $measurementManager;
-        $this->className = $className;
         $this->classMetadata = $measurementManager->getClassMetadata($className);
-        $this->queryBuilder = $measurementManager->getDatabase()->getQueryBuilder();
-        $this->queryBuilder->from($measurementManager->getClassMetadata($className)->getMeasurement());
+        $this->from = $this->classMetadata->getMeasurement();
+        $this->dateTo = (int) (new DateTime())->format('Uu000');
     }
 
-    /**
-     * Clones the object.
-     */
     public function __clone()
     {
-        $this->queryBuilder = clone $this->queryBuilder;
         $this->iterator = null;
     }
 
     /**
-     * Returns queryBuilder.
-     *
-     * @return Builder
-     */
-    public function getQueryBuilder(): Builder
-    {
-        return $this->queryBuilder;
-    }
-
-    /**
      * Returns className.
-     *
-     * @return string
      *
      * @phpstan-return class-string<T>
      */
@@ -113,8 +139,6 @@ class Query implements IteratorAggregate
     /**
      * Returns classMetadata.
      *
-     * @return ClassMetadata
-     *
      * @phpstan-return ClassMetadata<T>
      */
     public function getClassMetadata(): ClassMetadata
@@ -125,9 +149,7 @@ class Query implements IteratorAggregate
     /**
      * Set hydrationMode.
      *
-     * @param integer $hydrationMode One of the Query::HYDRATE_* constants.
-     *
-     * @return self
+     * @param int $hydrationMode One of the Query::HYDRATE_* constants.
      *
      * @phpstan-return Query<T>
      */
@@ -138,11 +160,6 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    /**
-     * Returns hydrationMode.
-     *
-     * @return integer
-     */
     public function getHydrationMode(): int
     {
         return $this->hydrationMode;
@@ -155,7 +172,44 @@ class Query implements IteratorAggregate
      */
     public function getRawResult(): array
     {
-        return $this->execute(self::HYDRATE_NONE);
+        $table = $this->measurementManager->getClient()->query($this->getFluxQuery());
+
+        $result = [];
+
+        if ($table === null) {
+            return $result;
+        }
+
+        foreach ($table->records as $record) {
+            $result[] = $record->values;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return mixed[]
+     *
+     * @phpstan-return array<int, array{time: DateTime, value: int|float}>
+     *
+     * @throws InfluxDBException
+     */
+    public function aggregateWindow(
+        AggregateEnum $aggregate,
+        string $aggregatePeriod,
+        ?string $aggregateField = null,
+    ): array
+    {
+        $this->aggregate = $aggregate;
+        $this->aggregatePeriod = $aggregatePeriod;
+        $this->aggregateField = $aggregateField ?? $this->classMetadata->getCountableFieldName();
+
+        return array_map(static fn(array $item): array => [
+            'time' => new DateTime($item['_time']
+                ?? throw new InfluxDBException('Missing "_time" field in result.')),
+            'value' => $item['_value']
+                ?? throw new InfluxDBException('Missing "_value" field in result.'),
+        ], $this->getRawResult());
     }
 
     /**
@@ -188,12 +242,7 @@ class Query implements IteratorAggregate
         return $this->execute(self::HYDRATE_SCALAR);
     }
 
-    /**
-     * Gets the single scalar result.
-     *
-     * @return mixed|null
-     */
-    public function getSingleScalarResult()
+    public function getSingleScalarResult(): mixed
     {
         $result = $this->execute(self::HYDRATE_SINGLE_SCALAR);
 
@@ -213,44 +262,27 @@ class Query implements IteratorAggregate
     /**
      * Executes the query and returns hydrated or plain result set.
      *
-     * @param integer|null $hydrationMode
-     *
      * @return array<int, mixed>
      */
-    public function execute(int $hydrationMode = null): array
+    public function execute(?int $hydrationMode = null): array
     {
         return $this->iterate($hydrationMode)->toArray();
     }
 
     /**
-     * Executes COUNT query and returns number of records.
-     *
-     * @return integer
-     */
-    public function executeCount(): int
-    {
-        return $this->count($this->classMetadata->getCountableFieldName())->getSingleScalarResult() ?? 0;
-    }
-
-    /**
      * Iterate the results.
-     *
-     * @param integer|null $hydrationMode
-     *
-     * @return IteratorInterface
      *
      * @phpstan-return IteratorInterface<T>
      */
-    public function iterate(int $hydrationMode = null): IteratorInterface
+    public function iterate(?int $hydrationMode = null): IteratorInterface
     {
-        if ($hydrationMode !== null) {
-            $this->setHydrationMode($hydrationMode);
-        }
+        $cursor = $this->getRawResult();
 
-        $cursor = $this->queryBuilder->getResultSet()->getPoints();
-
-        if ($this->hydrationMode !== self::HYDRATE_NONE) {
-            $hydrator = $this->measurementManager->createHydrator($this->className, $this->hydrationMode);
+        if ($hydrationMode !== self::HYDRATE_NONE) {
+            $hydrator = $this->measurementManager->createHydrator(
+                $this->className,
+                    $hydrationMode ?? self::HYDRATE_OBJECT,
+            );
 
             $cursor = new HydratingIterator($cursor, $hydrator);
         }
@@ -259,233 +291,308 @@ class Query implements IteratorAggregate
     }
 
     /**
-     * Quote field name.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     * @param boolean $enquote
-     *
-     * @return string
-     */
-    public function quoteFieldName(string $fieldName, bool $mappedField = true, bool $enquote = true): string
-    {
-        if (!$mappedField) {
-            return $fieldName;
-        }
-
-        $fieldName = $this->classMetadata->getFieldDatabaseName($fieldName);
-
-        return $enquote ? sprintf('"%s"', addslashes($fieldName)) : $fieldName;
-    }
-
-    /**
-     * Select.
-     *
-     * @param string $select
-     *
-     * @return self
+     * @param string[] $select
      *
      * @phpstan-return Query<T>
      */
-    public function select(string $select): self
+    public function select(array $select): self
     {
-        $this->queryBuilder->select($select);
+        $this->select = $select;
 
         return $this;
     }
 
     /**
-     * Where.
-     *
-     * @param string $condition
-     * @param mixed  $value
-     *
-     * @return self
-     *
      * @phpstan-return Query<T>
      */
-    public function where(string $condition, $value = null): self
+    public function addSelect(string $select): self
+    {
+        $this->select[] = $select;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function where(string $condition, mixed $value = null): self
     {
         if ($value !== null) {
             $fieldName = $condition;
 
+            if ($this->classMetadata->isIdentifier($fieldName) && $value instanceof DateTimeInterface) {
+                return $this->processIdWhere($value);
+            }
+
             $condition = sprintf(
-                "%s = '%s'",
+                'r.%s == "%s"',
                 $this->classMetadata->getFieldDatabaseName($fieldName),
                 addslashes($this->classMetadata->getFieldDatabaseValue($fieldName, $value))
             );
         }
 
-        $this->queryBuilder->where([$condition]);
+        $this->where[] = $condition;
 
         return $this;
     }
 
     /**
-     * Count.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
+     * @phpstan-return Query<T>
+     */
+    public function count(): self
+    {
+        $this->aggregate = AggregateEnum::COUNT;
+        $this->aggregateField = $this->classMetadata->getCountableFieldName();
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function median(string $fieldName): self
+    {
+        $this->aggregate = AggregateEnum::MEDIAN;
+        $this->aggregateField = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function mean(string $fieldName): self
+    {
+        $this->aggregate = AggregateEnum::MEAN;
+        $this->aggregateField = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function sum(string $fieldName): self
+    {
+        $this->aggregate = AggregateEnum::SUM;
+        $this->aggregateField = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function first(string $fieldName): self
+    {
+        $this->aggregate = AggregateEnum::FIRST;
+        $this->aggregateField = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function last(string $fieldName): self
+    {
+        $this->aggregate = AggregateEnum::LAST;
+        $this->aggregateField = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @param string[] $fields
      *
      * @phpstan-return Query<T>
      */
-    public function count(string $fieldName, bool $mappedField = true): self
+    public function groupBy(array $fields): self
     {
-        $this->queryBuilder->count($this->quoteFieldName($fieldName, $mappedField));
+        $this->groupBy = $fields;
 
         return $this;
     }
 
     /**
-     * Median.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
      * @phpstan-return Query<T>
      */
-    public function median(string $fieldName, bool $mappedField = true): self
+    public function orderBy(string $field, string $direction = 'asc'): self
     {
-        $this->queryBuilder->median($this->quoteFieldName($fieldName, $mappedField));
+        $this->orderBy = [['field' => $field, 'desc' => strtolower($direction) === 'desc']];
 
         return $this;
     }
 
     /**
-     * Mean.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
      * @phpstan-return Query<T>
      */
-    public function mean(string $fieldName, bool $mappedField = true): self
+    public function addOrderBy(string $field, string $direction = 'asc'): self
     {
-        $this->queryBuilder->mean($this->quoteFieldName($fieldName, $mappedField));
+        $this->orderBy[] = ['field' => $field, 'desc' => strtolower($direction) === 'desc'];
 
         return $this;
     }
 
     /**
-     * Sum.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
-     * @phpstan-return Query<T>
-     */
-    public function sum(string $fieldName, bool $mappedField = true): self
-    {
-        $this->queryBuilder->sum($this->quoteFieldName($fieldName, $mappedField));
-
-        return $this;
-    }
-
-    /**
-     * First.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
-     * @phpstan-return Query<T>
-     */
-    public function first(string $fieldName, bool $mappedField = true): self
-    {
-        $this->queryBuilder->first($this->quoteFieldName($fieldName, $mappedField));
-
-        return $this;
-    }
-
-    /**
-     * Last.
-     *
-     * @param string  $fieldName
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
-     * @phpstan-return Query<T>
-     */
-    public function last(string $fieldName, bool $mappedField = true): self
-    {
-        $this->queryBuilder->last($this->quoteFieldName($fieldName, $mappedField));
-
-        return $this;
-    }
-
-    /**
-     * Group by.
-     *
-     * @param string  $field
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
-     * @phpstan-return Query<T>
-     */
-    public function groupBy(string $field, bool $mappedField = true): self
-    {
-        $this->queryBuilder->groupBy($this->quoteFieldName($field, $mappedField));
-
-        return $this;
-    }
-
-    /**
-     * Order by.
-     *
-     * @param string  $field
-     * @param string  $direction
-     * @param boolean $mappedField
-     *
-     * @return self
-     *
-     * @phpstan-return Query<T>
-     */
-    public function orderBy(string $field, string $direction = 'ASC', bool $mappedField = true): self
-    {
-        $this->queryBuilder->orderBy($this->quoteFieldName($field, $mappedField, false), $direction);
-
-        return $this;
-    }
-
-    /**
-     * Offset.
-     *
-     * @param integer $offset
-     *
-     * @return self
-     *
      * @phpstan-return Query<T>
      */
     public function offset(int $offset): self
     {
-        $this->queryBuilder->offset($offset);
+        $this->offset = $offset;
 
         return $this;
     }
 
     /**
-     * Limit.
-     *
-     * @param integer $limit
-     *
-     * @return self
-     *
      * @phpstan-return Query<T>
      */
     public function limit(int $limit): self
     {
-        $this->queryBuilder->limit($limit);
+        $this->limit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function range(?DateTimeInterface $from, ?DateTimeInterface $to): self
+    {
+        if ($from) {
+            $this->dateFrom = (int) $from->format('Uu000');
+        }
+
+        if ($to) {
+            $this->dateTo = (int) $to->format('Uu000');
+        }
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function addImport(string $import): self
+    {
+        if (!in_array($import, $this->imports, true)) {
+            $this->imports[] = $import;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    public function fill(string $field, mixed $value): self
+    {
+        $this->fills[$field] = $value;
+
+        return $this;
+    }
+
+    public function getFluxQuery(): string
+    {
+        $query = sprintf(
+            <<<FLUX
+                %s
+                from(bucket:"%s")
+                    |> range(start: time(v: %d), stop: time(v: %d))
+                    |> filter(fn: (r) => r._measurement == "%s")
+                    |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+                    |> group(columns: [])
+            FLUX,
+            $this->imports
+                ? implode(
+                    PHP_EOL,
+                    array_map(static fn (string $import) => sprintf('import "%s"', $import), $this->imports),
+                ) . PHP_EOL
+                : '',
+            $this->measurementManager->getClient()->getDatabase(),
+            $this->dateFrom,
+            $this->dateTo,
+            $this->from,
+        );
+
+        if ($this->select) {
+            $query .= sprintf(
+                ' |> keep(columns: [%s])',
+                implode(', ', array_map($this->quoteFieldName(...), $this->select)),
+            );
+        }
+
+        if ($this->fills) {
+            foreach ($this->fills as $field => $value) {
+                $query .= sprintf(' |> fill(column: "%s", value: %s)', $field, $value);
+            }
+        }
+
+        if ($this->where) {
+            $query .= sprintf(' |> filter(fn: (r) => %s)', implode(' and ', $this->where));
+        }
+
+        if ($this->aggregate !== null) {
+            $query .= sprintf(
+                ' |> duplicate(column: %s, as: "_value")',
+                $this->quoteFieldName((string) $this->aggregateField),
+            );
+        }
+
+        if (!empty($this->groupBy)) {
+            $query .= sprintf(
+                ' |> group(columns: [%s])',
+                implode(', ', array_map($this->quoteFieldName(...), $this->groupBy)),
+            );
+        }
+
+        if ($this->orderBy) {
+            foreach ($this->orderBy as $orderBy) {
+                $query .= sprintf(
+                    ' |> sort(columns: [%s], desc: %s)',
+                    $this->quoteFieldName($orderBy['field']),
+                    $orderBy['desc'] ? 'true' : 'false',
+                );
+            }
+        }
+
+        if ($this->limit) {
+            $query .= sprintf(' |> limit(n: %d, offset: %d)', $this->limit, $this->offset);
+        }
+
+        if ($this->aggregatePeriod !== null) {
+            $query .= sprintf(
+                ' |> duplicate(column: %s, as: "_value") |> aggregateWindow(every: %s, fn: %s)',
+                $this->quoteFieldName((string) $this->aggregateField),
+                $this->aggregatePeriod,
+                (string) $this->aggregate?->value,
+            );
+        } elseif ($this->aggregate !== null) {
+            $query .= sprintf(' |> %s()', $this->aggregate->value);
+        }
+
+        if (!empty($this->groupBy)) {
+            $query .= ' |> group(columns: [])';
+        }
+
+        return $query;
+    }
+
+    public function quoteFieldName(string $fieldName): string
+    {
+        $fieldName = $this->classMetadata->getFieldDatabaseName($fieldName);
+
+        return sprintf('"%s"', addslashes($fieldName));
+    }
+
+    /**
+     * @phpstan-return Query<T>
+     */
+    private function processIdWhere(DateTimeInterface $dateTime): self
+    {
+        $this->range($dateTime, $dateTime);
+
+        $this->dateTo++;
 
         return $this;
     }

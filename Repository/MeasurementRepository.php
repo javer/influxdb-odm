@@ -2,6 +2,7 @@
 
 namespace Javer\InfluxDB\ODM\Repository;
 
+use DateTimeInterface;
 use Doctrine\Persistence\ObjectRepository;
 use Javer\InfluxDB\ODM\Mapping\MappingException;
 use Javer\InfluxDB\ODM\MeasurementManager;
@@ -9,36 +10,24 @@ use Javer\InfluxDB\ODM\Query\Query;
 
 /**
  * @template T of object
+ *
  * @template-implements ObjectRepository<T>
  */
 class MeasurementRepository implements ObjectRepository
 {
-    private MeasurementManager $measurementManager;
-
     /**
-     * @phpstan-var class-string<T>
-     */
-    private string $className;
-
-    /**
-     * MeasurementRepository constructor.
-     *
-     * @param MeasurementManager $measurementManager
-     * @param string             $className
+     * Constructor.
      *
      * @phpstan-param class-string<T> $className
      */
-    public function __construct(MeasurementManager $measurementManager, string $className)
+    public function __construct(
+        private readonly MeasurementManager $measurementManager,
+        private readonly string $className,
+    )
     {
-        $this->measurementManager = $measurementManager;
-        $this->className = $className;
     }
 
     /**
-     * Create a new query.
-     *
-     * @return Query
-     *
      * @phpstan-return Query<T>
      */
     public function createQuery(): Query
@@ -55,7 +44,7 @@ class MeasurementRepository implements ObjectRepository
      */
     public function find($id)
     {
-        if ($id === null) {
+        if (!$id instanceof DateTimeInterface) {
             return null;
         }
 
@@ -65,7 +54,10 @@ class MeasurementRepository implements ObjectRepository
             throw MappingException::missingIdentifierField($this->className);
         }
 
-        return $this->createQuery()->where($classMetadata->identifier, $id)->getResult()[0] ?? null;
+        return $this->createQuery()
+            ->where($classMetadata->identifier, $id)
+            ->orderBy($classMetadata->identifier)
+            ->getResult()[0] ?? null;
     }
 
     /**
@@ -81,14 +73,9 @@ class MeasurementRepository implements ObjectRepository
     /**
      * {@inheritDoc}
      *
-     * @param array<string, mixed>       $criteria
-     * @param array<string, string>|null $orderBy
-     * @param int|null                   $limit
-     * @param int|null                   $offset
-     *
      * @phpstan-return array<int, T>
      */
-    public function findBy(array $criteria, ?array $orderBy = null, $limit = null, $offset = null): array
+    public function findBy(array $criteria, ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array
     {
         $query = $this->createQuery();
 
@@ -131,11 +118,6 @@ class MeasurementRepository implements ObjectRepository
         return $this->className;
     }
 
-    /**
-     * Returns MeasurementManager.
-     *
-     * @return MeasurementManager
-     */
     protected function getMeasurementManager(): MeasurementManager
     {
         return $this->measurementManager;

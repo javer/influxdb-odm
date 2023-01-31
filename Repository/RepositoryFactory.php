@@ -3,9 +3,8 @@
 namespace Javer\InfluxDB\ODM\Repository;
 
 use Javer\InfluxDB\ODM\MeasurementManager;
-use RuntimeException;
 
-class RepositoryFactory implements RepositoryFactoryInterface
+final class RepositoryFactory implements RepositoryFactoryInterface
 {
     /**
      * @var MeasurementRepository[]
@@ -19,8 +18,10 @@ class RepositoryFactory implements RepositoryFactoryInterface
      * {@inheritDoc}
      *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   MeasurementRepository<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return MeasurementRepository<T>
      */
     public function getRepository(MeasurementManager $measurementManager, string $className): MeasurementRepository
     {
@@ -33,16 +34,11 @@ class RepositoryFactory implements RepositoryFactoryInterface
     /**
      * Creates a new repository.
      *
-     * @param MeasurementManager $measurementManager
-     * @param string             $className
-     *
-     * @return MeasurementRepository
-     *
-     * @throws RuntimeException
-     *
      * @phpstan-template T of object
-     * @phpstan-param    class-string<T> $className
-     * @phpstan-return   MeasurementRepository<T>
+     *
+     * @phpstan-param class-string<T> $className
+     *
+     * @phpstan-return MeasurementRepository<T>
      */
     private function createRepository(
         MeasurementManager $measurementManager,
