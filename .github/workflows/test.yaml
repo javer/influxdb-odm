@@ -3,13 +3,13 @@ name: Test
 on:
     push:
     pull_request:
-        types: [opened, synchronize, edited, reopened]
+        types: [opened, synchronize, reopened]
 
 jobs:
     test:
         name: PHP ${{ matrix.php-version }}
 
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
 
         continue-on-error: ${{ matrix.experimental }}
 
@@ -20,10 +20,12 @@ jobs:
                       experimental: false
                     - php-version: '8.1'
                       experimental: false
+                    - php-version: '8.2'
+                      experimental: false
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -37,7 +39,7 @@ jobs:
               run: composer validate --no-check-lock
 
             - name: Install Composer dependencies
-              uses: "ramsey/composer-install@v1"
+              uses: "ramsey/composer-install@v2"
               with:
                   composer-options: "--prefer-dist"
 
