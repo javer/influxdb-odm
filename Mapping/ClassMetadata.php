@@ -532,7 +532,7 @@ final class ClassMetadata implements BaseClassMetadata
             $mapping['fieldName'] = $mapping['name'];
         }
 
-        if (!isset($mapping['fieldName']) || !is_string($mapping['fieldName'])) {
+        if (!isset($mapping['fieldName'])) {
             throw MappingException::missingFieldName($this->name);
         }
 
