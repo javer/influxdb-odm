@@ -6,13 +6,14 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Persistence\Mapping\ClassMetadata as BaseClassMetadata;
 use Doctrine\Persistence\Mapping\Driver\ColocatedMappingDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Javer\InfluxDB\ODM\Mapping\Annotations\Field;
 use Javer\InfluxDB\ODM\Mapping\Annotations\Measurement;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\Mapping\MappingException;
 use ReflectionClass;
 
-class AnnotationDriver extends CompatibilityAnnotationDriver
+class AnnotationDriver implements MappingDriver
 {
     use ColocatedMappingDriver;
 

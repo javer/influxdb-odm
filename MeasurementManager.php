@@ -23,7 +23,7 @@ use RuntimeException;
 class MeasurementManager implements ObjectManager
 {
     /**
-     * @var ClassMetadataFactory<object>
+     * @var ClassMetadataFactory<ClassMetadata<object>>
      */
     private ClassMetadataFactory $metadataFactory;
 
@@ -60,7 +60,7 @@ class MeasurementManager implements ObjectManager
     /**
      * {@inheritDoc}
      *
-     * @phpstan-return ClassMetadataFactory<object>
+     * @phpstan-return ClassMetadataFactory<ClassMetadata<object>>
      * @phpstan-ignore-next-line The method returns what is declared
      */
     public function getMetadataFactory(): ClassMetadataFactory
@@ -69,13 +69,11 @@ class MeasurementManager implements ObjectManager
     }
 
     /**
-     * @param string $className
-     *
      * @phpstan-template T of object
      * @phpstan-param    class-string<T> $className
      * @phpstan-return   ClassMetadata<T>
      */
-    public function getClassMetadata($className): ClassMetadata
+    public function getClassMetadata(string $className): ClassMetadata
     {
         // @phpstan-ignore-next-line: It returns ClassMetadata<T>
         return $this->metadataFactory->getMetadataFor($className);
@@ -167,15 +165,12 @@ class MeasurementManager implements ObjectManager
      * @phpstan-param    class-string<T> $className
      * @phpstan-return   ?T
      */
-    public function find($className, $id): ?object
+    public function find(string $className, $id): ?object
     {
         return $this->getRepository($className)->find($id);
     }
 
-    /**
-     * @param object $object
-     */
-    public function persist($object): void
+    public function persist(object $object): void
     {
         $this->measurementPersister->persist([$object]);
     }
@@ -192,73 +187,42 @@ class MeasurementManager implements ObjectManager
         $this->measurementPersister->persist($objects);
     }
 
-    /**
-     * @param object $object
-     */
-    public function remove($object): void
+    public function remove(object $object): void
     {
         $this->measurementPersister->remove($object);
     }
 
-    /**
-     * @param object $object
-     */
-    public function merge($object): object
-    {
-        return $object;
-    }
-
-    /**
-     * @param string|null $objectName
-     */
-    public function clear($objectName = null): void
+    public function clear(): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function detach($object): void
+    public function detach(object $object): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function refresh($object): void
+    public function refresh(object $object): void
     {
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function flush(): void
     {
     }
 
     /**
-     * @param string $className
-     *
      * @phpstan-template T of object
      * @phpstan-param    class-string<T> $className
      * @phpstan-return   MeasurementRepository<T>
      */
-    public function getRepository($className): MeasurementRepository
+    public function getRepository(string $className): MeasurementRepository
     {
         return $this->repositoryFactory->getRepository($this, $className);
     }
 
-    /**
-     * @param object $obj
-     */
-    public function initializeObject($obj): void
+    public function initializeObject(object $obj): void
     {
     }
 
-    /**
-     * @param object $object
-     */
-    public function contains($object): bool
+    public function contains(object $object): bool
     {
         return true;
     }

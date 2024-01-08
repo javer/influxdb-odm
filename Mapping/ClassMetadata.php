@@ -117,13 +117,6 @@ final class ClassMetadata implements BaseClassMetadata
     public ?string $countableFieldName = null;
 
     /**
-     * READ-ONLY: Whether this class describes the mapping of a mapped superclass.
-     *
-     * @var boolean
-     */
-    public bool $isMappedSuperclass = false;
-
-    /**
      * The ReflectionClass instance of the mapped class.
      *
      * @var ReflectionClass
@@ -162,10 +155,7 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->reflClass;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isIdentifier($fieldName): bool
+    public function isIdentifier(string $fieldName): bool
     {
         return $this->identifier === $fieldName;
     }
@@ -185,7 +175,7 @@ final class ClassMetadata implements BaseClassMetadata
      */
     public function getIdentifier(): array
     {
-        return [$this->identifier];
+        return [(string) $this->identifier];
     }
 
     /**
@@ -196,10 +186,7 @@ final class ClassMetadata implements BaseClassMetadata
         return $this->identifier ? [$this->identifier] : [];
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function hasField($fieldName): bool
+    public function hasField(string $fieldName): bool
     {
         return isset($this->fieldMappings[$fieldName]);
     }
@@ -288,26 +275,17 @@ final class ClassMetadata implements BaseClassMetadata
         $this->customRepositoryClassName = $repositoryClassName;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function hasAssociation($fieldName): bool
+    public function hasAssociation(string $fieldName): bool
     {
         return false;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isSingleValuedAssociation($fieldName): bool
+    public function isSingleValuedAssociation(string $fieldName): bool
     {
         return false;
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function isCollectionValuedAssociation($fieldName): bool
+    public function isCollectionValuedAssociation(string $fieldName): bool
     {
         return false;
     }
@@ -372,7 +350,7 @@ final class ClassMetadata implements BaseClassMetadata
      *
      * @return array<string, mixed>
      */
-    public function getIdentifierValues($object): array
+    public function getIdentifierValues(object $object): array
     {
         return [$this->identifier => $this->getIdentifierValue($object)];
     }
@@ -471,40 +449,28 @@ final class ClassMetadata implements BaseClassMetadata
         return [];
     }
 
-    /**
-     * @param string $fieldName
-     */
-    public function getTypeOfField($fieldName): ?string
+    public function getTypeOfField(string $fieldName): ?string
     {
         return isset($this->fieldMappings[$fieldName]) ? $this->fieldMappings[$fieldName]['type'] : null;
     }
 
-    /**
-     * @param string $assocName
-     */
-    public function getAssociationTargetClass($assocName): ?string
+    public function getAssociationTargetClass(string $assocName): ?string
     {
         return null;
     }
 
     /**
-     * @param string $assocName
-     *
      * @throws BadMethodCallException
      */
-    public function isAssociationInverseSide($assocName): bool
+    public function isAssociationInverseSide(string $assocName): bool
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @param string $assocName
-     *
      * @throws BadMethodCallException
      */
-    public function getAssociationMappedByTargetField($assocName)
+    public function getAssociationMappedByTargetField(string $assocName): string
     {
         throw new BadMethodCallException(__METHOD__ . '() is not implemented yet.');
     }
@@ -661,7 +627,7 @@ final class ClassMetadata implements BaseClassMetadata
      *
      * @return mixed
      */
-    public function getFieldPhpValue(string $fieldName, $value)
+    public function getFieldPhpValue(string $fieldName, mixed $value): mixed
     {
         $fieldMapping = $this->getFieldMapping($fieldName);
 

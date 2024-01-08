@@ -32,7 +32,7 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
      * @phpstan-param  class-string<T> $className
      * @phpstan-return ClassMetadata<T>
      */
-    public function getMetadataFor($className): ClassMetadata
+    public function getMetadataFor(string $className): ClassMetadata
     {
         $metadata = parent::getMetadataFor($className);
 
@@ -47,15 +47,6 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     protected function initialize(): void
     {
         $this->initialized = true;
-    }
-
-    /**
-     * @param string $namespaceAlias
-     * @param string $simpleClassName
-     */
-    protected function getFqcnFromAlias($namespaceAlias, $simpleClassName): string
-    {
-        return $namespaceAlias . '\\' . $simpleClassName;
     }
 
     /**
@@ -89,14 +80,22 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     }
 
     /**
-     * @param BaseClassMetadata<T>      $class
-     * @param BaseClassMetadata<T>|null $parent
-     * @param bool                      $rootEntityFound
-     * @param string[]                  $nonSuperclassParents
+     * @param BaseClassMetadata      $class
+     * @param BaseClassMetadata|null $parent
+     * @param bool                   $rootEntityFound
+     * @param string[]               $nonSuperclassParents
      *
      * @throws MappingException
+     *
+     * @phpstan-param BaseClassMetadata<T>      $class
+     * @phpstan-param BaseClassMetadata<T>|null $parent
      */
-    protected function doLoadMetadata($class, $parent, $rootEntityFound, array $nonSuperclassParents): void
+    protected function doLoadMetadata(
+        BaseClassMetadata $class,
+        ?BaseClassMetadata $parent,
+        bool $rootEntityFound,
+        array $nonSuperclassParents,
+    ): void
     {
         assert($class instanceof ClassMetadata);
 
@@ -117,7 +116,7 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
      * @phpstan-param  class-string<T> $className
      * @phpstan-return ClassMetadata<T>
      */
-    protected function newClassMetadataInstance($className): ClassMetadata
+    protected function newClassMetadataInstance(string $className): ClassMetadata
     {
         return new ClassMetadata($className);
     }
