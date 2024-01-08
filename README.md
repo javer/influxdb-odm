@@ -109,13 +109,14 @@ use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
 
 $dsn = 'influxdb://localhost:8086/metrics';
 $mappingDir = 'src/Measurements';
-$annotationDriver = new AnnotationDriver(new AnnotationReader(), $mappingDir);
+$mappingDriver = new AnnotationDriver(new AnnotationReader(), $mappingDir);
 $connectionFactory = new ConnectionFactory();
 $repositoryFactory = new RepositoryFactory();
-$measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
+$measurementManager = new MeasurementManager($mappingDriver, $connectionFactory, $repositoryFactory, $dsn);
 ```
+To be able to use annotations, you will have to install an extra package called `doctrine/annotations`.
 
-or using PHP 8 Attributes:
+Using PHP 8 Attributes:
 ```php
 use Javer\InfluxDB\ODM\Connection\ConnectionFactory;
 use Javer\InfluxDB\ODM\Mapping\Driver\AttributeDriver;
@@ -124,10 +125,10 @@ use Javer\InfluxDB\ODM\Repository\RepositoryFactory;
 
 $dsn = 'influxdb://localhost:8086/metrics';
 $mappingDir = 'src/Measurements';
-$annotationDriver = new AttributeDriver($mappingDir);
+$mappingDriver = new AttributeDriver($mappingDir);
 $connectionFactory = new ConnectionFactory();
 $repositoryFactory = new RepositoryFactory();
-$measurementManager = new MeasurementManager($annotationDriver, $connectionFactory, $repositoryFactory, $dsn);
+$measurementManager = new MeasurementManager($mappingDriver, $connectionFactory, $repositoryFactory, $dsn);
 ```
 
 Persisting Objects to InfluxDB

@@ -2,6 +2,7 @@
 
 namespace Javer\InfluxDB\ODM;
 
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Doctrine\Persistence\ObjectManager;
 use InfluxDB\Database;
 use Javer\InfluxDB\ODM\Connection\ConnectionFactoryInterface;
@@ -12,7 +13,6 @@ use Javer\InfluxDB\ODM\Hydrator\ScalarHydrator;
 use Javer\InfluxDB\ODM\Hydrator\SingleScalarHydrator;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadata;
 use Javer\InfluxDB\ODM\Mapping\ClassMetadataFactory;
-use Javer\InfluxDB\ODM\Mapping\Driver\AnnotationDriver;
 use Javer\InfluxDB\ODM\Persister\MeasurementPersister;
 use Javer\InfluxDB\ODM\Query\Query;
 use Javer\InfluxDB\ODM\Repository\MeasurementRepository;
@@ -35,22 +35,14 @@ class MeasurementManager implements ObjectManager
 
     private string $url;
 
-    /**
-     * MeasurementManager constructor.
-     *
-     * @param AnnotationDriver           $annotationDriver
-     * @param ConnectionFactoryInterface $connectionFactory
-     * @param RepositoryFactoryInterface $repositoryFactory
-     * @param string                     $url
-     */
     public function __construct(
-        AnnotationDriver $annotationDriver,
+        MappingDriver $mappingDriver,
         ConnectionFactoryInterface $connectionFactory,
         RepositoryFactoryInterface $repositoryFactory,
         string $url
     )
     {
-        $this->metadataFactory = new ClassMetadataFactory($annotationDriver);
+        $this->metadataFactory = new ClassMetadataFactory($mappingDriver);
         $this->repositoryFactory = $repositoryFactory;
         $this->connectionFactory = $connectionFactory;
         $this->measurementPersister = new MeasurementPersister($this);

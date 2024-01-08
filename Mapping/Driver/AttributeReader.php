@@ -2,97 +2,29 @@
 
 namespace Javer\InfluxDB\ODM\Mapping\Driver;
 
-use Doctrine\Common\Annotations\Reader;
 use Javer\InfluxDB\ODM\Mapping\Annotations\Annotation;
 use ReflectionAttribute;
 use ReflectionClass;
-use ReflectionMethod;
 use ReflectionProperty;
 
-class AttributeReader implements Reader
+final class AttributeReader
 {
     /**
      * @return Annotation[]
      *
      * @phpstan-param ReflectionClass<object> $class
      */
-    public function getClassAnnotations(ReflectionClass $class): array
+    public function getClassAttributes(ReflectionClass $class): array
     {
         return $this->convertToAttributeInstances($class->getAttributes());
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return Annotation|null
-     *
-     * @phpstan-param ReflectionClass<object>  $class
-     * @phpstan-param class-string<Annotation> $annotationName
-     */
-    public function getClassAnnotation(ReflectionClass $class, $annotationName)
-    {
-        foreach ($this->getClassAnnotations($class) as $annotation) {
-            if ($annotation instanceof $annotationName) {
-                return $annotation;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param ReflectionMethod $method
-     *
      * @return Annotation[]
      */
-    public function getMethodAnnotations(ReflectionMethod $method): array
-    {
-        return $this->convertToAttributeInstances($method->getAttributes());
-    }
-
-    /**
-     * @param ReflectionMethod $method
-     * @param string           $annotationName
-     *
-     * @return Annotation|null
-     */
-    public function getMethodAnnotation(ReflectionMethod $method, $annotationName)
-    {
-        foreach ($this->getMethodAnnotations($method) as $annotation) {
-            if ($annotation instanceof $annotationName) {
-                return $annotation;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return Annotation[]
-     */
-    public function getPropertyAnnotations(ReflectionProperty $property): array
+    public function getPropertyAttributes(ReflectionProperty $property): array
     {
         return $this->convertToAttributeInstances($property->getAttributes());
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return Annotation|null
-     *
-     * @phpstan-param class-string<Annotation> $annotationName
-     */
-    public function getPropertyAnnotation(ReflectionProperty $property, $annotationName)
-    {
-        foreach ($this->getPropertyAnnotations($property) as $annotation) {
-            if ($annotation instanceof $annotationName) {
-                return $annotation;
-            }
-        }
-
-        return null;
     }
 
     /**

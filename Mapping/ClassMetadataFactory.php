@@ -4,8 +4,8 @@ namespace Javer\InfluxDB\ODM\Mapping;
 
 use Doctrine\Persistence\Mapping\AbstractClassMetadataFactory;
 use Doctrine\Persistence\Mapping\ClassMetadata as BaseClassMetadata;
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Doctrine\Persistence\Mapping\ReflectionService;
-use Javer\InfluxDB\ODM\Mapping\Driver\AnnotationDriver;
 use ReflectionException;
 
 /**
@@ -14,16 +14,11 @@ use ReflectionException;
  */
 class ClassMetadataFactory extends AbstractClassMetadataFactory
 {
-    private AnnotationDriver $driver;
+    private MappingDriver $driver;
 
-    /**
-     * ClassMetadataFactory constructor.
-     *
-     * @param AnnotationDriver $annotationDriver
-     */
-    public function __construct(AnnotationDriver $annotationDriver)
+    public function __construct(MappingDriver $mappingDriver)
     {
-        $this->driver = $annotationDriver;
+        $this->driver = $mappingDriver;
     }
 
     /**
@@ -52,7 +47,7 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
     /**
      * {@inheritDoc}
      */
-    protected function getDriver(): AnnotationDriver
+    protected function getDriver(): MappingDriver
     {
         return $this->driver;
     }
